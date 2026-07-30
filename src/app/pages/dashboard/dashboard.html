@@ -1,0 +1,48 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1>Resumen mensual</h1>
+      <p>Ingresos vs egresos del período.</p>
+    </div>
+    <div class="filters">
+      <label>
+        Año
+        <input type="number" [(ngModel)]="year" />
+      </label>
+      <label>
+        Mes
+        <input type="number" min="1" max="12" [(ngModel)]="month" />
+      </label>
+      <button type="button" class="btn" (click)="load()">Actualizar</button>
+    </div>
+  </header>
+
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+
+  @if (report(); as r) {
+    <div class="stats">
+      <article>
+        <h2>Mensualidades</h2>
+        <p>{{ money(r.income.membership_payments) }}</p>
+      </article>
+      <article>
+        <h2>Ventas</h2>
+        <p>{{ money(r.income.sales) }}</p>
+      </article>
+      <article>
+        <h2>Ingresos totales</h2>
+        <p>{{ money(r.income.total) }}</p>
+      </article>
+      <article>
+        <h2>Gastos</h2>
+        <p>{{ money(r.expenses.total) }}</p>
+      </article>
+      <article class="accent">
+        <h2>Balance</h2>
+        <p>{{ money(r.balance) }}</p>
+      </article>
+    </div>
+  }
+</section>

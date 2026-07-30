@@ -1,0 +1,74 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1>Gastos</h1>
+      <p>Egresos operativos (renta, servicios, etc.).</p>
+    </div>
+  </header>
+
+  <form class="panel form-grid" (ngSubmit)="save()">
+    <label>
+      Categoría
+      <input [(ngModel)]="form.category" name="category" required />
+    </label>
+    <label>
+      Descripción
+      <input [(ngModel)]="form.description" name="description" />
+    </label>
+    <label>
+      Monto
+      <input type="number" step="0.01" [(ngModel)]="form.amount" name="amount" required />
+    </label>
+    <label>
+      Fecha
+      <input type="date" [(ngModel)]="form.expense_date" name="expense_date" required />
+    </label>
+    <label>
+      Sucursal (opcional)
+      <select [(ngModel)]="form.branch_id" name="branch_id">
+        <option [ngValue]="null">General</option>
+        @for (b of branches(); track b.id) {
+          <option [ngValue]="b.id">{{ b.name }}</option>
+        }
+      </select>
+    </label>
+    <label class="full">
+      Notas
+      <textarea [(ngModel)]="form.notes" name="notes" rows="2"></textarea>
+    </label>
+    <div class="actions">
+      <button class="btn" type="submit">{{ editingId ? 'Actualizar' : 'Registrar' }}</button>
+      @if (editingId) {
+        <button class="btn ghost" type="button" (click)="reset()">Cancelar</button>
+      }
+    </div>
+  </form>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Categoría</th>
+          <th>Monto</th>
+          <th>Sucursal</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of items(); track item.id) {
+          <tr>
+            <td>{{ item.expense_date }}</td>
+            <td>{{ item.category }}</td>
+            <td>{{ item.amount }}</td>
+            <td>{{ item.branch?.name || 'General' }}</td>
+            <td class="row-actions">
+              <button type="button" class="btn ghost" (click)="edit(item)">Editar</button>
+              <button type="button" class="btn danger" (click)="remove(item.id)">Eliminar</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

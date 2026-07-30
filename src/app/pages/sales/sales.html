@@ -1,0 +1,75 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1>Ventas</h1>
+      <p>Registro de ventas con descuento de inventario.</p>
+    </div>
+  </header>
+
+  <form class="panel form-grid" (ngSubmit)="save()">
+    <label>
+      Sucursal
+      <select [(ngModel)]="branchId" name="branch_id" required>
+        @for (b of branches(); track b.id) {
+          <option [ngValue]="b.id">{{ b.name }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      Fecha
+      <input type="date" [(ngModel)]="saleDate" name="sale_date" required />
+    </label>
+    <label class="full">
+      Notas
+      <input [(ngModel)]="notes" name="notes" />
+    </label>
+
+    @for (item of items; track $index; let i = $index) {
+      <label>
+        Producto
+        <select [(ngModel)]="item.product_id" [name]="'product_' + i" required>
+          <option [ngValue]="null" disabled>Selecciona</option>
+          @for (p of products(); track p.id) {
+            <option [ngValue]="p.id">{{ p.name }} — {{ p.unit_price }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Cantidad
+        <input type="number" min="1" [(ngModel)]="item.quantity" [name]="'qty_' + i" required />
+      </label>
+    }
+
+    <div class="actions">
+      <button class="btn ghost" type="button" (click)="addItem()">+ Ítem</button>
+      <button class="btn" type="submit">Registrar venta</button>
+    </div>
+  </form>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Sucursal</th>
+          <th>Total</th>
+          <th>Ítems</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (sale of sales(); track sale.id) {
+          <tr>
+            <td>{{ sale.sale_date }}</td>
+            <td>{{ sale.branch?.name || sale.branch_id }}</td>
+            <td>{{ sale.total }}</td>
+            <td>{{ sale.items?.length || 0 }}</td>
+            <td class="row-actions">
+              <button type="button" class="btn danger" (click)="remove(sale.id)">Eliminar</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

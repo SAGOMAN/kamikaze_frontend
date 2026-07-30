@@ -1,0 +1,30 @@
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark">HS</span>
+      <div>
+        <strong>Hanuman Style</strong>
+        <small>Panel admin</small>
+      </div>
+    </div>
+    <nav>
+      <a routerLink="/app/dashboard" routerLinkActive="active">Resumen</a>
+      <a routerLink="/app/branches" routerLinkActive="active">Sucursales</a>
+      <a routerLink="/app/students" routerLinkActive="active">Alumnos</a>
+      <a routerLink="/app/payments" routerLinkActive="active">Mensualidades</a>
+      <a routerLink="/app/attendance" routerLinkActive="active">Asistencia</a>
+      <a routerLink="/app/products" routerLinkActive="active">Productos</a>
+      <a routerLink="/app/sales" routerLinkActive="active">Ventas</a>
+      <a routerLink="/app/expenses" routerLinkActive="active">Gastos</a>
+      <a routerLink="/app/instructors" routerLinkActive="active">Profesores</a>
+      <a routerLink="/app/schedules" routerLinkActive="active">Agenda</a>
+    </nav>
+    <div class="sidebar-foot">
+      <span>{{ auth.user()?.name }}</span>
+      <button type="button" class="linkish" (click)="logout()">Cerrar sesión</button>
+    </div>
+  </aside>
+  <main class="content">
+    <router-outlet />
+  </main>
+</div>

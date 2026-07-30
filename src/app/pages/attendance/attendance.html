@@ -1,0 +1,50 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1>Asistencia</h1>
+      <p>Marca asistencia por fecha y sucursal.</p>
+    </div>
+    <div class="filters">
+      <label>
+        Fecha
+        <input type="date" [(ngModel)]="date" name="date" (change)="reload()" />
+      </label>
+      <label>
+        Sucursal
+        <select [(ngModel)]="branchId" name="branchId" (ngModelChange)="reload()">
+          @for (b of branches(); track b.id) {
+            <option [ngValue]="b.id">{{ b.name }}</option>
+          }
+        </select>
+      </label>
+    </div>
+  </header>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Alumno</th>
+          <th>Asistió</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (s of students(); track s.id) {
+          <tr>
+            <td>{{ label(s) }}</td>
+            <td>
+              <button
+                type="button"
+                class="btn"
+                [class.ghost]="!isPresent(s.id)"
+                (click)="toggle(s)"
+              >
+                {{ isPresent(s.id) ? 'Presente' : 'Marcar' }}
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

@@ -1,0 +1,83 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1>Agenda de clases</h1>
+      <p>Rotación semanal de profesores por sucursal.</p>
+    </div>
+  </header>
+
+  <form class="panel form-grid" (ngSubmit)="save()">
+    <label>
+      Profesor
+      <select [(ngModel)]="form.instructor_id" name="instructor_id" required>
+        <option [ngValue]="undefined" disabled>Selecciona</option>
+        @for (i of instructors(); track i.id) {
+          <option [ngValue]="i.id">{{ i.name }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      Sucursal
+      <select [(ngModel)]="form.branch_id" name="branch_id" required>
+        <option [ngValue]="undefined" disabled>Selecciona</option>
+        @for (b of branches(); track b.id) {
+          <option [ngValue]="b.id">{{ b.name }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      Día
+      <select [(ngModel)]="form.day_of_week" name="day_of_week" required>
+        @for (day of days; track $index; let i = $index) {
+          <option [ngValue]="i">{{ day }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      Inicio
+      <input type="time" [(ngModel)]="form.start_time" name="start_time" required />
+    </label>
+    <label>
+      Fin
+      <input type="time" [(ngModel)]="form.end_time" name="end_time" required />
+    </label>
+    <label class="checkbox">
+      <input type="checkbox" [(ngModel)]="form.is_active" name="is_active" />
+      Activo
+    </label>
+    <div class="actions">
+      <button class="btn" type="submit">{{ editingId ? 'Actualizar' : 'Crear' }}</button>
+      @if (editingId) {
+        <button class="btn ghost" type="button" (click)="reset()">Cancelar</button>
+      }
+    </div>
+  </form>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Día</th>
+          <th>Horario</th>
+          <th>Profesor</th>
+          <th>Sucursal</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of items(); track item.id) {
+          <tr>
+            <td>{{ dayName(item.day_of_week) }}</td>
+            <td>{{ item.start_time }} – {{ item.end_time }}</td>
+            <td>{{ item.instructor?.name || item.instructor_id }}</td>
+            <td>{{ item.branch?.name || item.branch_id }}</td>
+            <td class="row-actions">
+              <button type="button" class="btn ghost" (click)="edit(item)">Editar</button>
+              <button type="button" class="btn danger" (click)="remove(item.id)">Eliminar</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

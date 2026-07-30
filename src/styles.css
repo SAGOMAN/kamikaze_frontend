@@ -1,1 +1,194 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+  color-scheme: dark;
+  font-family: 'Segoe UI', 'Trebuchet MS', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #0f1419;
+  color: #e8ecef;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: end;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.page-header p {
+  margin: 0.35rem 0 0;
+  color: #9aa7b5;
+}
+
+.filters {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: end;
+}
+
+.filters label,
+.form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  color: #b7c2cd;
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+}
+
+input,
+select,
+textarea {
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid #344050;
+  background: #121820;
+  color: #e8ecef;
+  min-width: 0;
+}
+
+.panel {
+  padding: 1rem;
+  border: 1px solid #2a3544;
+  border-radius: 12px;
+  background: rgba(18, 24, 32, 0.85);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.85rem;
+  align-items: end;
+}
+
+.form-grid .full {
+  grid-column: 1 / -1;
+}
+
+.checkbox {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.5rem !important;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 0.55rem 0.9rem;
+  border-radius: 8px;
+  border: none;
+  background: #c45c26;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn.ghost {
+  background: transparent;
+  border: 1px solid #445366;
+  color: #d7dee6;
+}
+
+.btn.danger {
+  background: #8b2e2e;
+}
+
+.table-wrap {
+  overflow: auto;
+  border: 1px solid #2a3544;
+  border-radius: 12px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+th,
+td {
+  padding: 0.7rem 0.85rem;
+  text-align: left;
+  border-bottom: 1px solid #243041;
+}
+
+th {
+  background: #1a2330;
+  color: #9aa7b5;
+  font-weight: 600;
+}
+
+.row-actions {
+  display: flex;
+  gap: 0.35rem;
+  justify-content: flex-end;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.85rem;
+}
+
+.stats article {
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid #2a3544;
+  background: #121820;
+}
+
+.stats h2 {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #9aa7b5;
+  font-weight: 600;
+}
+
+.stats p {
+  margin: 0.45rem 0 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.stats .accent {
+  border-color: #c45c26;
+  background: linear-gradient(160deg, rgba(196, 92, 38, 0.2), #121820);
+}
+
+.section-title {
+  margin: 0.5rem 0 0;
+  font-size: 1.15rem;
+}
+
+.error {
+  color: #ff8d8d;
+}

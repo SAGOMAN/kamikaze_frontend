@@ -1,0 +1,30 @@
+<div class="login-page">
+  <form class="login-card" (ngSubmit)="submit()">
+    <p class="eyebrow">Hanuman Style</p>
+    <h1>Acceso admin</h1>
+    <p class="lead">Gestiona sucursales, alumnos, asistencia y finanzas.</p>
+
+    <label>
+      Correo
+      <input type="email" name="email" [(ngModel)]="email" required autocomplete="username" />
+    </label>
+    <label>
+      Contraseña
+      <input
+        type="password"
+        name="password"
+        [(ngModel)]="password"
+        required
+        autocomplete="current-password"
+      />
+    </label>
+
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+
+    <button type="submit" [disabled]="loading()">
+      {{ loading() ? 'Entrando…' : 'Entrar' }}
+    </button>
+  </form>
+</div>
