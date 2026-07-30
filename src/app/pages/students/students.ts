@@ -2,14 +2,17 @@ import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
 import { Student } from '../../core/models';
+import { ConfirmService } from '../../shared/confirm/confirm.service';
+import { Modal } from '../../shared/modal/modal';
 
 @Component({
   selector: 'app-students',
-  imports: [FormsModule],
+  imports: [FormsModule, Modal],
   templateUrl: './students.html',
 })
 export class StudentsPage implements OnInit {
   readonly items = signal<Student[]>([]);
+  readonly formOpen = signal(false);
   search = '';
   form: Partial<Student> = {
     first_name: '',
@@ -21,7 +24,10 @@ export class StudentsPage implements OnInit {
   };
   editingId: number | null = null;
 
-  constructor(private readonly api: ApiService) {}
+  constructor(
+    private readonly api: ApiService,
+    private readonly confirm: ConfirmService,
+  ) {}
 
   ngOnInit() {
     this.reload();
@@ -35,9 +41,20 @@ export class StudentsPage implements OnInit {
     return s.nickname ? `${s.first_name} ${s.last_name} (“${s.nickname}”)` : `${s.first_name} ${s.last_name}`;
   }
 
+  openCreate() {
+    this.reset();
+    this.formOpen.set(true);
+  }
+
   edit(item: Student) {
     this.editingId = item.id;
     this.form = { ...item };
+    this.formOpen.set(true);
+  }
+
+  closeForm() {
+    this.reset();
+    this.formOpen.set(false);
   }
 
   reset() {
@@ -58,13 +75,14 @@ export class StudentsPage implements OnInit {
       : this.api.post<Student>('/students', this.form);
 
     req.subscribe(() => {
-      this.reset();
+      this.closeForm();
       this.reload();
     });
   }
 
-  remove(id: number) {
-    if (!confirm('¿Eliminar alumno?')) return;
+  async remove(id: number) {
+    const ok = await this.confirm.ask('¿Está seguro de que desea eliminar este alumno?');
+    if (!ok) return;
     this.api.delete(`/students/${id}`).subscribe(() => this.reload());
   }
 }

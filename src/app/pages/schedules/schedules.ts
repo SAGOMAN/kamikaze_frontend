@@ -2,10 +2,12 @@ import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
 import { Branch, ClassSchedule, Instructor } from '../../core/models';
+import { ConfirmService } from '../../shared/confirm/confirm.service';
+import { Modal } from '../../shared/modal/modal';
 
 @Component({
   selector: 'app-schedules',
-  imports: [FormsModule],
+  imports: [FormsModule, Modal],
   templateUrl: './schedules.html',
 })
 export class SchedulesPage implements OnInit {
@@ -13,6 +15,7 @@ export class SchedulesPage implements OnInit {
   readonly items = signal<ClassSchedule[]>([]);
   readonly instructors = signal<Instructor[]>([]);
   readonly branches = signal<Branch[]>([]);
+  readonly formOpen = signal(false);
   form: Partial<ClassSchedule> = {
     instructor_id: undefined,
     branch_id: undefined,
@@ -24,7 +27,10 @@ export class SchedulesPage implements OnInit {
   };
   editingId: number | null = null;
 
-  constructor(private readonly api: ApiService) {}
+  constructor(
+    private readonly api: ApiService,
+    private readonly confirm: ConfirmService,
+  ) {}
 
   ngOnInit() {
     this.api.get<Instructor[]>('/instructors', { is_active: true }).subscribe((d) => this.instructors.set(d));
@@ -40,6 +46,11 @@ export class SchedulesPage implements OnInit {
     return this.days[day] ?? String(day);
   }
 
+  openCreate() {
+    this.reset();
+    this.formOpen.set(true);
+  }
+
   edit(item: ClassSchedule) {
     this.editingId = item.id;
     this.form = {
@@ -47,6 +58,12 @@ export class SchedulesPage implements OnInit {
       start_time: String(item.start_time).slice(0, 5),
       end_time: String(item.end_time).slice(0, 5),
     };
+    this.formOpen.set(true);
+  }
+
+  closeForm() {
+    this.reset();
+    this.formOpen.set(false);
   }
 
   reset() {
@@ -67,13 +84,14 @@ export class SchedulesPage implements OnInit {
       ? this.api.put(`/class-schedules/${this.editingId}`, this.form)
       : this.api.post('/class-schedules', this.form);
     req.subscribe(() => {
-      this.reset();
+      this.closeForm();
       this.reload();
     });
   }
 
-  remove(id: number) {
-    if (!confirm('¿Eliminar horario?')) return;
+  async remove(id: number) {
+    const ok = await this.confirm.ask('¿Está seguro de que desea eliminar este horario?');
+    if (!ok) return;
     this.api.delete(`/class-schedules/${id}`).subscribe(() => this.reload());
   }
 }

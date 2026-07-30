@@ -24,7 +24,12 @@
     }
 
     <button type="submit" [disabled]="loading()">
-      {{ loading() ? 'Entrando…' : 'Entrar' }}
+      @if (loading()) {
+        <span class="spinner btn-spinner" aria-hidden="true"></span>
+        Entrando…
+      } @else {
+        Entrar
+      }
     </button>
   </form>
 </div>

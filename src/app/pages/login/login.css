@@ -4,10 +4,10 @@
   place-items: center;
   padding: 1.5rem;
   background:
-    linear-gradient(135deg, rgba(15, 20, 25, 0.92), rgba(26, 35, 48, 0.88)),
-    radial-gradient(circle at 20% 20%, #c45c26 0%, transparent 35%),
-    #0f1419;
-  color: #e8ecef;
+    linear-gradient(135deg, rgba(238, 242, 246, 0.92), rgba(247, 249, 252, 0.88)),
+    radial-gradient(circle at 20% 20%, rgba(196, 92, 38, 0.22) 0%, transparent 38%),
+    var(--bg);
+  color: var(--text);
 }
 
 .login-card {
@@ -16,10 +16,10 @@
   flex-direction: column;
   gap: 0.85rem;
   padding: 2rem;
-  border: 1px solid #2a3544;
+  border: 1px solid var(--border);
   border-radius: 16px;
-  background: rgba(18, 24, 32, 0.92);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+  background: var(--surface);
+  box-shadow: var(--shadow);
 }
 
 .eyebrow {
@@ -27,7 +27,7 @@
   text-transform: uppercase;
   letter-spacing: 0.12em;
   font-size: 0.75rem;
-  color: #e08a4f;
+  color: var(--accent-soft);
 }
 
 h1 {
@@ -38,7 +38,7 @@ h1 {
 
 .lead {
   margin: 0 0 0.5rem;
-  color: #9aa7b5;
+  color: var(--text-muted);
 }
 
 label {
@@ -51,18 +51,22 @@ label {
 input {
   padding: 0.7rem 0.8rem;
   border-radius: 8px;
-  border: 1px solid #344050;
-  background: #0f1419;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-muted);
   color: inherit;
 }
 
 button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   margin-top: 0.5rem;
   padding: 0.8rem 1rem;
   border: none;
   border-radius: 8px;
-  background: #c45c26;
-  color: #fff;
+  background: var(--accent);
+  color: var(--accent-contrast);
   font-weight: 600;
   cursor: pointer;
 }
@@ -74,6 +78,6 @@ button:disabled {
 
 .error {
   margin: 0;
-  color: #ff8d8d;
+  color: var(--error);
   font-size: 0.9rem;
 }

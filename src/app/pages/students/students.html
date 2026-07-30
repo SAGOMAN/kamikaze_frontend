@@ -6,42 +6,10 @@
     </div>
     <div class="filters">
       <input placeholder="Buscar…" [(ngModel)]="search" name="search" (keyup.enter)="reload()" />
-      <button type="button" class="btn" (click)="reload()">Buscar</button>
+      <button type="button" class="btn ghost" (click)="reload()">Buscar</button>
+      <button type="button" class="btn" (click)="openCreate()">Inscribir alumno</button>
     </div>
   </header>
-
-  <form class="panel form-grid" (ngSubmit)="save()">
-    <label>
-      Nombre
-      <input [(ngModel)]="form.first_name" name="first_name" required />
-    </label>
-    <label>
-      Apellidos
-      <input [(ngModel)]="form.last_name" name="last_name" required />
-    </label>
-    <label>
-      Apodo
-      <input [(ngModel)]="form.nickname" name="nickname" />
-    </label>
-    <label>
-      Teléfono
-      <input [(ngModel)]="form.phone" name="phone" />
-    </label>
-    <label>
-      Correo
-      <input type="email" [(ngModel)]="form.email" name="email" />
-    </label>
-    <label class="checkbox">
-      <input type="checkbox" [(ngModel)]="form.is_active" name="is_active" />
-      Activo
-    </label>
-    <div class="actions">
-      <button class="btn" type="submit">{{ editingId ? 'Actualizar' : 'Inscribir' }}</button>
-      @if (editingId) {
-        <button class="btn ghost" type="button" (click)="reset()">Cancelar</button>
-      }
-    </div>
-  </form>
 
   <div class="table-wrap">
     <table>
@@ -68,4 +36,41 @@
       </tbody>
     </table>
   </div>
+
+  <app-modal
+    [open]="formOpen()"
+    [title]="editingId ? 'Editar alumno' : 'Inscribir alumno'"
+    (closed)="closeForm()"
+  >
+    <form class="form-grid" (ngSubmit)="save()">
+      <label>
+        Nombre
+        <input [(ngModel)]="form.first_name" name="first_name" required />
+      </label>
+      <label>
+        Apellidos
+        <input [(ngModel)]="form.last_name" name="last_name" required />
+      </label>
+      <label>
+        Apodo
+        <input [(ngModel)]="form.nickname" name="nickname" />
+      </label>
+      <label>
+        Teléfono
+        <input [(ngModel)]="form.phone" name="phone" />
+      </label>
+      <label>
+        Correo
+        <input type="email" [(ngModel)]="form.email" name="email" />
+      </label>
+      <label class="checkbox">
+        <input type="checkbox" [(ngModel)]="form.is_active" name="is_active" />
+        Activo
+      </label>
+      <div class="actions modal-actions">
+        <button class="btn ghost" type="button" (click)="closeForm()">Cancelar</button>
+        <button class="btn" type="submit">{{ editingId ? 'Guardar cambios' : 'Inscribir' }}</button>
+      </div>
+    </form>
+  </app-modal>
 </section>

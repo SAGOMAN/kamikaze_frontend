@@ -2,8 +2,8 @@
   display: grid;
   grid-template-columns: 240px 1fr;
   min-height: 100vh;
-  background: #0f1419;
-  color: #e8ecef;
+  background: var(--bg);
+  color: var(--text);
 }
 
 .sidebar {
@@ -11,8 +11,8 @@
   flex-direction: column;
   gap: 1.5rem;
   padding: 1.25rem 1rem;
-  background: linear-gradient(180deg, #1a2330 0%, #121820 100%);
-  border-right: 1px solid #2a3544;
+  background: linear-gradient(180deg, var(--sidebar) 0%, var(--sidebar-end) 100%);
+  border-right: 1px solid var(--border);
 }
 
 .brand {
@@ -27,8 +27,8 @@
   display: grid;
   place-items: center;
   border-radius: 10px;
-  background: #c45c26;
-  color: #fff;
+  background: var(--accent);
+  color: var(--accent-contrast);
   font-weight: 700;
   font-family: 'Segoe UI', system-ui, sans-serif;
 }
@@ -39,7 +39,7 @@
 }
 
 .brand small {
-  color: #9aa7b5;
+  color: var(--text-muted);
 }
 
 nav {
@@ -50,7 +50,7 @@ nav {
 }
 
 nav a {
-  color: #c5d0da;
+  color: var(--text-soft);
   text-decoration: none;
   padding: 0.55rem 0.75rem;
   border-radius: 8px;
@@ -59,8 +59,8 @@ nav a {
 
 nav a:hover,
 nav a.active {
-  background: #243041;
-  color: #fff;
+  background: var(--nav-hover);
+  color: var(--text);
 }
 
 .sidebar-foot {
@@ -68,13 +68,13 @@ nav a.active {
   flex-direction: column;
   gap: 0.35rem;
   font-size: 0.85rem;
-  color: #9aa7b5;
+  color: var(--text-muted);
 }
 
 .linkish {
   background: none;
   border: none;
-  color: #e08a4f;
+  color: var(--accent-soft);
   cursor: pointer;
   text-align: left;
   padding: 0;
@@ -84,8 +84,8 @@ nav a.active {
   padding: 1.5rem 1.75rem;
   overflow: auto;
   background:
-    radial-gradient(circle at top right, rgba(196, 92, 38, 0.12), transparent 40%),
-    #0f1419;
+    radial-gradient(circle at top right, var(--bg-accent), transparent 42%),
+    var(--bg);
 }
 
 @media (max-width: 900px) {

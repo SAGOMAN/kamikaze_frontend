@@ -2,6 +2,7 @@ import { Component, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
 import { Attendance, Branch, Student } from '../../core/models';
+import { ConfirmService } from '../../shared/confirm/confirm.service';
 
 @Component({
   selector: 'app-attendance',
@@ -17,7 +18,10 @@ export class AttendancePage implements OnInit {
 
   readonly presentIds = computed(() => new Set(this.attendances().map((a) => a.student_id)));
 
-  constructor(private readonly api: ApiService) {}
+  constructor(
+    private readonly api: ApiService,
+    private readonly confirm: ConfirmService,
+  ) {}
 
   ngOnInit() {
     this.api.get<Branch[]>('/branches').subscribe((data) => {
@@ -45,11 +49,15 @@ export class AttendancePage implements OnInit {
     return this.presentIds().has(studentId);
   }
 
-  toggle(student: Student) {
+  async toggle(student: Student) {
     if (!this.branchId) return;
 
     const existing = this.attendances().find((a) => a.student_id === student.id);
     if (existing) {
+      const ok = await this.confirm.ask(
+        `¿Está seguro de que desea quitar la asistencia de ${this.label(student)}?`,
+      );
+      if (!ok) return;
       this.api.delete(`/attendances/${existing.id}`).subscribe(() => this.reload());
       return;
     }
