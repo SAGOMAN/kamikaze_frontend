@@ -5,47 +5,106 @@
       <p>Rotación semanal de profesores por sucursal.</p>
     </div>
     <div class="filters">
-      <input
-        type="search"
-        placeholder="Buscar profesor o sucursal…"
-        [(ngModel)]="list.search"
-        name="search"
-        (keyup.enter)="searchNow()"
-      />
-      <button type="button" class="btn ghost" (click)="searchNow()">Buscar</button>
+      <div class="view-toggle" role="group" aria-label="Vista de agenda">
+        <button
+          type="button"
+          class="btn ghost"
+          [class.is-active]="viewMode() === 'list'"
+          (click)="setViewMode('list')"
+        >
+          Lista
+        </button>
+        <button
+          type="button"
+          class="btn ghost"
+          [class.is-active]="viewMode() === 'calendar'"
+          (click)="setViewMode('calendar')"
+        >
+          Calendario
+        </button>
+      </div>
+      @if (viewMode() === 'list') {
+        <input
+          type="search"
+          placeholder="Buscar profesor o sucursal…"
+          [(ngModel)]="list.search"
+          name="search"
+          (keyup.enter)="searchNow()"
+        />
+        <button type="button" class="btn ghost" (click)="searchNow()">Buscar</button>
+      }
       <button type="button" class="btn" (click)="openCreate()">Nuevo horario</button>
     </div>
   </header>
 
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Día</th>
-          <th>Horario</th>
-          <th>Profesor</th>
-          <th>Sucursal</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (item of items(); track item.id) {
+  @if (viewMode() === 'list') {
+    <div class="table-wrap">
+      <table>
+        <thead>
           <tr>
-            <td>{{ dayName(item.day_of_week) }}</td>
-            <td>{{ item.start_time }} – {{ item.end_time }}</td>
-            <td>{{ item.instructor?.name || item.instructor_id }}</td>
-            <td>{{ item.branch?.name || item.branch_id }}</td>
-            <td class="row-actions">
-              <button type="button" class="btn ghost" (click)="edit(item)">Editar</button>
-              <button type="button" class="btn danger" (click)="remove(item.id)">Eliminar</button>
-            </td>
+            <th>Día</th>
+            <th>Horario</th>
+            <th>Profesor</th>
+            <th>Sucursal</th>
+            <th></th>
           </tr>
-        }
-      </tbody>
-    </table>
-  </div>
+        </thead>
+        <tbody>
+          @for (item of items(); track item.id) {
+            <tr>
+              <td>{{ dayName(item.day_of_week) }}</td>
+              <td>{{ item.start_time }} – {{ item.end_time }}</td>
+              <td>{{ item.instructor?.name || item.instructor_id }}</td>
+              <td>{{ item.branch?.name || item.branch_id }}</td>
+              <td class="row-actions">
+                <button type="button" class="btn ghost" (click)="edit(item)">Editar</button>
+                <button type="button" class="btn danger" (click)="remove(item.id)">Eliminar</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
 
-  <app-list-pager [meta]="list.meta()" (pageChange)="goToPage($event)" />
+    <app-list-pager [meta]="list.meta()" (pageChange)="goToPage($event)" />
+  } @else {
+    <p class="calendar-hint">
+      Un calendario por sucursal. Arrastra un rango vacío para crear, clic para editar, bordes para
+      redimensionar, × para eliminar.
+    </p>
+
+    <div class="branch-accordions">
+      @for (panel of branchPanels(); track panel.branch.id) {
+        <div
+          class="branch-accordion panel"
+          [class.is-open]="isBranchOpen(panel.branch.id)"
+        >
+          <button
+            type="button"
+            class="branch-accordion-summary"
+            [attr.aria-expanded]="isBranchOpen(panel.branch.id)"
+            (click)="toggleBranch(panel.branch.id)"
+          >
+            <span class="branch-accordion-title">{{ panel.branch.name }}</span>
+            @if (!panel.branch.is_active) {
+              <span class="branch-accordion-badge">Inactiva</span>
+            }
+          </button>
+          <div class="branch-accordion-body" (transitionend)="onAccordionTransitionEnd($event)">
+            <div class="branch-accordion-body-inner">
+              <div class="schedules-calendar">
+                <full-calendar [options]="panel.options"></full-calendar>
+              </div>
+            </div>
+          </div>
+        </div>
+      } @empty {
+        <div class="panel calendar-empty">
+          <p>No hay sucursales para mostrar.</p>
+        </div>
+      }
+    </div>
+  }
 
   <app-modal
     [open]="formOpen()"
@@ -93,6 +152,9 @@
       </label>
     </form>
     <div modalFooter class="actions modal-actions">
+      @if (editingId) {
+        <button class="btn danger" type="button" (click)="removeFromForm()">Eliminar</button>
+      }
       <button class="btn ghost" type="button" (click)="closeForm()">Cancelar</button>
       <button class="btn" type="submit" form="schedule-form">
         {{ editingId ? 'Guardar cambios' : 'Crear' }}

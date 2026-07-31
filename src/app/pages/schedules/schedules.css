@@ -1,0 +1,232 @@
+.view-toggle {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.2rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-muted);
+}
+
+.view-toggle .btn.ghost {
+  margin: 0;
+  border: none;
+  box-shadow: none;
+}
+
+.view-toggle .btn.ghost.is-active {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.calendar-hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.branch-accordions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.branch-accordion {
+  padding: 0;
+  overflow: hidden;
+}
+
+.branch-accordion-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border: none;
+  border-radius: 0;
+  border-bottom: 1px solid transparent;
+  background: var(--surface-muted);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.28s ease;
+}
+
+.branch-accordion-summary::before {
+  content: '';
+  width: 0.45rem;
+  height: 0.45rem;
+  border-right: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--text-muted);
+  transform: rotate(-45deg);
+  transition: transform 0.28s ease;
+  flex-shrink: 0;
+}
+
+.branch-accordion.is-open .branch-accordion-summary {
+  border-bottom-color: var(--border);
+}
+
+.branch-accordion.is-open .branch-accordion-summary::before {
+  transform: rotate(45deg);
+}
+
+.branch-accordion-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s ease;
+}
+
+.branch-accordion.is-open .branch-accordion-body {
+  grid-template-rows: 1fr;
+}
+
+.branch-accordion-body-inner {
+  min-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-0.35rem);
+  transition:
+    opacity 0.28s ease,
+    transform 0.35s ease;
+}
+
+.branch-accordion.is-open .branch-accordion-body-inner {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.branch-accordion-title {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.branch-accordion-badge {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.calendar-empty p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.schedules-calendar {
+  padding: 1rem 1rem 0.75rem;
+}
+
+/* FullCalendar — tema alineado al producto */
+.schedules-calendar {
+  --fc-border-color: var(--border);
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: var(--surface-muted);
+  --fc-today-bg-color: transparent;
+  --fc-event-bg-color: var(--accent);
+  --fc-event-border-color: var(--accent);
+  --fc-event-text-color: var(--accent-contrast);
+  --fc-highlight-color: color-mix(in srgb, var(--accent) 18%, transparent);
+  --fc-now-indicator-color: var(--accent);
+}
+
+.schedules-calendar .fc {
+  font-size: 0.9rem;
+}
+
+.schedules-calendar .fc .fc-col-header-cell {
+  background: var(--surface-muted);
+}
+
+.schedules-calendar .fc .fc-col-header-cell-cushion {
+  color: var(--text);
+  text-decoration: none;
+  padding: 0.55rem 0.35rem;
+  text-transform: capitalize;
+  font-weight: 600;
+}
+
+.schedules-calendar .fc .fc-timegrid-slot {
+  height: 2.6rem;
+}
+
+.schedules-calendar .fc .fc-timegrid-slot-label-cushion {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.schedules-calendar .fc .fc-timegrid-col.fc-day-today {
+  background: transparent;
+}
+
+.schedules-calendar .fc .fc-event {
+  border-radius: 6px;
+  border: none;
+  padding: 0.15rem 0.25rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+  overflow: visible;
+}
+
+.schedules-calendar .fc .fc-event.is-inactive-schedule {
+  background: var(--text-soft);
+  border-color: var(--text-soft);
+  opacity: 0.75;
+}
+
+.schedules-calendar .fc .fc-event-delete {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  z-index: 3;
+  width: 1.15rem;
+  height: 1.15rem;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--danger) 88%, #000);
+  color: #fff;
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.schedules-calendar .fc .fc-event-delete:hover {
+  background: var(--danger);
+}
+
+.schedules-calendar .fc .fc-event .fc-event-main {
+  padding-right: 1.2rem;
+}
+
+.schedules-calendar .fc .fc-event .fc-event-resizer {
+  height: 0.55rem;
+  cursor: ns-resize;
+}
+
+.schedules-calendar .fc .fc-event .fc-event-resizer-start,
+.schedules-calendar .fc .fc-event .fc-event-resizer-end {
+  background: color-mix(in srgb, var(--accent-contrast) 35%, transparent);
+}
+
+.schedules-calendar .fc .fc-highlight {
+  background: var(--fc-highlight-color);
+}
+
+@media (max-width: 900px) {
+  .schedules-calendar .fc .fc-col-header-cell-cushion {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.15rem;
+  }
+
+  .schedules-calendar .fc .fc-timegrid-slot {
+    height: 2.2rem;
+  }
+}
