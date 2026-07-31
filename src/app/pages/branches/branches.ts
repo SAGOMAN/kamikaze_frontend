@@ -7,6 +7,8 @@ import { ConfirmService } from '../../shared/confirm/confirm.service';
 import { ListPager } from '../../shared/list-pager/list-pager';
 import { Modal } from '../../shared/modal/modal';
 
+const DEFAULT_COLOR = '#64748B';
+
 @Component({
   selector: 'app-branches',
   imports: [FormsModule, Modal, ListPager],
@@ -16,7 +18,7 @@ export class BranchesPage implements OnInit {
   readonly items = signal<Branch[]>([]);
   readonly formOpen = signal(false);
   readonly list = new ListQueryState();
-  form: Partial<Branch> = { name: '', address: '', is_active: true };
+  form: Partial<Branch> = { name: '', address: '', is_active: true, color: DEFAULT_COLOR };
   editingId: number | null = null;
 
   constructor(
@@ -60,13 +62,21 @@ export class BranchesPage implements OnInit {
 
   reset() {
     this.editingId = null;
-    this.form = { name: '', address: '', is_active: true };
+    this.form = { name: '', address: '', is_active: true, color: DEFAULT_COLOR };
+  }
+
+  onColorPicker(value: string) {
+    this.form.color = value.toUpperCase();
   }
 
   save() {
+    const payload = {
+      ...this.form,
+      color: (this.form.color || DEFAULT_COLOR).toUpperCase(),
+    };
     const req = this.editingId
-      ? this.api.put(`/branches/${this.editingId}`, this.form)
-      : this.api.post('/branches', this.form);
+      ? this.api.put(`/branches/${this.editingId}`, payload)
+      : this.api.post('/branches', payload);
     req.subscribe(() => {
       this.closeForm();
       this.reload();

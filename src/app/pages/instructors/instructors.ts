@@ -7,6 +7,8 @@ import { ConfirmService } from '../../shared/confirm/confirm.service';
 import { ListPager } from '../../shared/list-pager/list-pager';
 import { Modal } from '../../shared/modal/modal';
 
+const DEFAULT_COLOR = '#64748B';
+
 @Component({
   selector: 'app-instructors',
   imports: [FormsModule, Modal, ListPager],
@@ -16,7 +18,14 @@ export class InstructorsPage implements OnInit {
   readonly items = signal<Instructor[]>([]);
   readonly formOpen = signal(false);
   readonly list = new ListQueryState();
-  form: Partial<Instructor> = { name: '', phone: '', email: '', is_active: true, notes: '' };
+  form: Partial<Instructor> = {
+    name: '',
+    phone: '',
+    email: '',
+    is_active: true,
+    color: DEFAULT_COLOR,
+    notes: '',
+  };
   editingId: number | null = null;
 
   constructor(
@@ -60,13 +69,28 @@ export class InstructorsPage implements OnInit {
 
   reset() {
     this.editingId = null;
-    this.form = { name: '', phone: '', email: '', is_active: true, notes: '' };
+    this.form = {
+      name: '',
+      phone: '',
+      email: '',
+      is_active: true,
+      color: DEFAULT_COLOR,
+      notes: '',
+    };
+  }
+
+  onColorPicker(value: string) {
+    this.form.color = value.toUpperCase();
   }
 
   save() {
+    const payload = {
+      ...this.form,
+      color: (this.form.color || DEFAULT_COLOR).toUpperCase(),
+    };
     const req = this.editingId
-      ? this.api.put(`/instructors/${this.editingId}`, this.form)
-      : this.api.post('/instructors', this.form);
+      ? this.api.put(`/instructors/${this.editingId}`, payload)
+      : this.api.post('/instructors', payload);
     req.subscribe(() => {
       this.closeForm();
       this.reload();

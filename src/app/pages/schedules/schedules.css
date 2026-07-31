@@ -102,6 +102,11 @@
   font-size: 1rem;
 }
 
+.branch-accordion-swatch {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
 .branch-accordion-badge {
   margin-left: auto;
   font-size: 0.75rem;

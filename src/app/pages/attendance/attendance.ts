@@ -33,6 +33,7 @@ export class AttendancePage implements OnInit {
 
   readonly presentIds = computed(() => new Set(this.attendances().map((a) => a.student_id)));
   readonly presentCount = computed(() => this.attendances().length);
+  error = '';
 
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, interactionPlugin],
@@ -61,12 +62,15 @@ export class AttendancePage implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.api.get<Branch[]>('/branches').subscribe((data) => {
-      this.branches.set(data.filter((b) => b.is_active));
-      if (data.length && !this.branchId) {
-        this.branchId = data[0].id;
-        this.loadSchedules();
-      }
+    this.api.get<Branch[]>('/branches').subscribe({
+      next: (data) => {
+        this.branches.set(data.filter((b) => b.is_active));
+        if (data.length && !this.branchId) {
+          this.branchId = data[0].id;
+          this.loadSchedules();
+        }
+      },
+      error: (err) => this.setError(err, 'No se pudieron cargar las sucursales'),
     });
     this.reloadStudents();
   }
@@ -77,7 +81,10 @@ export class AttendancePage implements OnInit {
         '/students',
         this.studentList.params({ is_active: true }),
       )
-      .subscribe((res) => this.studentList.apply(res, (data) => this.students.set(data)));
+      .subscribe({
+        next: (res) => this.studentList.apply(res, (data) => this.students.set(data)),
+        error: (err) => this.setError(err, 'No se pudieron cargar los alumnos'),
+      });
   }
 
   searchStudents() {
@@ -144,12 +151,14 @@ export class AttendancePage implements OnInit {
 
   selectDate(isoDate: string) {
     if (this.date === isoDate) return;
+    this.clearError();
     this.date = isoDate;
     this.refreshCalendarDayStyles();
     this.applyDaySchedules();
   }
 
   onBranchChange() {
+    this.clearError();
     this.loadSchedules();
   }
 
@@ -159,10 +168,13 @@ export class AttendancePage implements OnInit {
       .get<ClassSchedule[]>('/class-schedules', {
         branch_id: this.branchId,
       })
-      .subscribe((data) => {
-        this.branchSchedules.set(data.filter((s) => s.is_active));
-        this.refreshCalendarDayStyles();
-        this.applyDaySchedules();
+      .subscribe({
+        next: (data) => {
+          this.branchSchedules.set(data.filter((s) => s.is_active));
+          this.refreshCalendarDayStyles();
+          this.applyDaySchedules();
+        },
+        error: (err) => this.setError(err, 'No se pudieron cargar los horarios'),
       });
   }
 
@@ -187,6 +199,7 @@ export class AttendancePage implements OnInit {
   }
 
   reload() {
+    this.clearError();
     if (!this.branchId || !this.scheduleId) {
       this.attendances.set([]);
       return;
@@ -197,7 +210,10 @@ export class AttendancePage implements OnInit {
         branch_id: this.branchId,
         class_schedule_id: this.scheduleId,
       })
-      .subscribe((data) => this.attendances.set(data));
+      .subscribe({
+        next: (data) => this.attendances.set(data),
+        error: (err) => this.setError(err, 'No se pudieron cargar las asistencias'),
+      });
   }
 
   label(s: Student) {
@@ -206,6 +222,42 @@ export class AttendancePage implements OnInit {
 
   isPresent(studentId: number) {
     return this.presentIds().has(studentId);
+  }
+
+  clearError() {
+    this.error = '';
+  }
+
+  setError(err: unknown, fallback: string) {
+    const body = (err as { error?: Record<string, unknown> } | null)?.error;
+    if (!body || typeof body !== 'object') {
+      this.error = fallback;
+      return;
+    }
+
+    if (typeof body['message'] === 'string' && body['message']) {
+      this.error = body['message'];
+      return;
+    }
+
+    const fieldErrors = body['errors'];
+    if (fieldErrors && typeof fieldErrors === 'object') {
+      for (const key of ['student_id', 'class_schedule_id', 'branch_id', 'attendance_date', 'record']) {
+        const field = (fieldErrors as Record<string, unknown>)[key];
+        if (Array.isArray(field) && typeof field[0] === 'string') {
+          this.error = field[0];
+          return;
+        }
+      }
+      for (const field of Object.values(fieldErrors as Record<string, unknown>)) {
+        if (Array.isArray(field) && typeof field[0] === 'string') {
+          this.error = field[0];
+          return;
+        }
+      }
+    }
+
+    this.error = fallback;
   }
 
   async toggle(student: Student) {
@@ -217,10 +269,15 @@ export class AttendancePage implements OnInit {
         `¿Está seguro de que desea quitar la asistencia de ${this.label(student)}?`,
       );
       if (!ok) return;
-      this.api.delete(`/attendances/${existing.id}`).subscribe(() => this.reload());
+      this.clearError();
+      this.api.delete(`/attendances/${existing.id}`).subscribe({
+        next: () => this.reload(),
+        error: (err) => this.setError(err, 'No se pudo quitar la asistencia'),
+      });
       return;
     }
 
+    this.clearError();
     this.api
       .post('/attendances', {
         student_id: student.id,
@@ -228,6 +285,9 @@ export class AttendancePage implements OnInit {
         class_schedule_id: this.scheduleId,
         attendance_date: this.date,
       })
-      .subscribe(() => this.reload());
+      .subscribe({
+        next: () => this.reload(),
+        error: (err) => this.setError(err, 'No se pudo marcar la asistencia'),
+      });
   }
 }

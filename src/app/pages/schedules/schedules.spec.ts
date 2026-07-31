@@ -12,9 +12,14 @@ describe('SchedulesPage', () => {
   let api: jasmine.SpyObj<ApiService>;
   let confirm: jasmine.SpyObj<ConfirmService>;
 
-  const branch: Branch = { id: 1, name: 'Centro', is_active: true };
-  const otherBranch: Branch = { id: 2, name: 'Norte', is_active: true };
-  const instructor: Instructor = { id: 5, name: 'Sensei Koji', is_active: true };
+  const branch: Branch = { id: 1, name: 'Centro', is_active: true, color: '#C45C26' };
+  const otherBranch: Branch = { id: 2, name: 'Norte', is_active: true, color: '#1F6B4A' };
+  const instructor: Instructor = {
+    id: 5,
+    name: 'Sensei Koji',
+    is_active: true,
+    color: '#3B82F6',
+  };
   const schedule: ClassSchedule = {
     id: 100,
     instructor_id: 5,
@@ -172,7 +177,7 @@ describe('SchedulesPage', () => {
     expect(component.isBranchOpen(2)).toBeFalse();
   });
 
-  it('mapea eventos con título de profesor e inactivo', fakeAsync(() => {
+  it('mapea eventos con título de profesor, color e inactivo', fakeAsync(() => {
     component.ngOnInit();
     component.setViewMode('calendar');
     tick();
@@ -183,6 +188,9 @@ describe('SchedulesPage', () => {
       start: string;
       end: string;
       classNames?: string[];
+      backgroundColor?: string;
+      borderColor?: string;
+      textColor?: string;
     }>;
 
     const active = events.find((e) => e.id === '100');
@@ -191,8 +199,23 @@ describe('SchedulesPage', () => {
     expect(active?.title).toBe('Sensei Koji');
     expect(active?.start).toMatch(/T18:00:00$/);
     expect(active?.end).toMatch(/T20:00:00$/);
+    expect(active?.backgroundColor).toBe('#3B82F6');
+    expect(active?.borderColor).toBe('#3B82F6');
+    expect(active?.textColor).toBe('#FFFFFF');
     expect(inactive?.title).toBe('Sensei Koji (inactivo)');
     expect(inactive?.classNames).toContain('is-inactive-schedule');
+    expect(inactive?.backgroundColor).toBeUndefined();
+    expect(inactive?.borderColor).toBeUndefined();
+  }));
+
+  it('expone color de sucursal en paneles del acordeón', fakeAsync(() => {
+    component.ngOnInit();
+    component.setViewMode('calendar');
+    tick();
+
+    const panels = component.branchPanels();
+    expect(panels.find((p) => p.branch.id === 1)?.branch.color).toBe('#C45C26');
+    expect(panels.find((p) => p.branch.id === 2)?.branch.color).toBe('#1F6B4A');
   }));
 
   it('select en calendario abre modal con sucursal del panel', fakeAsync(() => {

@@ -46,6 +46,10 @@
         </label>
       </div>
 
+      @if (error) {
+        <p class="error">{{ error }}</p>
+      }
+
       @if (!schedules().length) {
         <div class="panel attendance-empty">
           <p>No hay horarios activos para esta sucursal en el día seleccionado.</p>

@@ -3,6 +3,7 @@ export interface Branch {
   name: string;
   address?: string | null;
   is_active: boolean;
+  color: string;
 }
 
 export interface PaginationMeta {
@@ -122,6 +123,7 @@ export interface Instructor {
   phone?: string | null;
   email?: string | null;
   is_active: boolean;
+  color: string;
   notes?: string | null;
 }
 

@@ -85,6 +85,11 @@
             [attr.aria-expanded]="isBranchOpen(panel.branch.id)"
             (click)="toggleBranch(panel.branch.id)"
           >
+            <span
+              class="color-swatch branch-accordion-swatch"
+              [style.background]="panel.branch.color || '#64748B'"
+              [title]="panel.branch.color || '#64748B'"
+            ></span>
             <span class="branch-accordion-title">{{ panel.branch.name }}</span>
             @if (!panel.branch.is_active) {
               <span class="branch-accordion-badge">Inactiva</span>

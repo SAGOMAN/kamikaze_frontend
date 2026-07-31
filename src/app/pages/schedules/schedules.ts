@@ -380,13 +380,34 @@ export class SchedulesPage implements OnInit {
     const end = String(schedule.end_time).slice(0, 5);
     const instructor = schedule.instructor?.name || `Profesor #${schedule.instructor_id}`;
     const inactive = schedule.is_active === false ? ' (inactivo)' : '';
-    return {
+    const event: EventInput = {
       id: String(schedule.id),
       title: `${instructor}${inactive}`,
       start: `${date}T${start}:00`,
       end: `${date}T${end}:00`,
       classNames: schedule.is_active === false ? ['is-inactive-schedule'] : [],
     };
+
+    if (schedule.is_active !== false) {
+      const color = schedule.instructor?.color || '#64748B';
+      event.backgroundColor = color;
+      event.borderColor = color;
+      event.textColor = this.contrastText(color);
+    }
+
+    return event;
+  }
+
+  private contrastText(hex: string): string {
+    const h = hex.replace('#', '');
+    if (h.length !== 6) {
+      return '#FFFFFF';
+    }
+    const r = parseInt(h.slice(0, 2), 16);
+    const g = parseInt(h.slice(2, 4), 16);
+    const b = parseInt(h.slice(4, 6), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.55 ? '#1A1A1A' : '#FFFFFF';
   }
 
   private templateDateForDay(dayOfWeek: number): string {

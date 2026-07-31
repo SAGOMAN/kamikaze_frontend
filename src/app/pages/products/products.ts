@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
 import { ListQueryState } from '../../core/list-query';
@@ -7,10 +7,16 @@ import { ConfirmService } from '../../shared/confirm/confirm.service';
 import { ListPager } from '../../shared/list-pager/list-pager';
 import { Modal } from '../../shared/modal/modal';
 
+export interface BranchStockCard {
+  branch: Branch;
+  stocks: ProductStock[];
+}
+
 @Component({
   selector: 'app-products',
   imports: [FormsModule, Modal, ListPager],
   templateUrl: './products.html',
+  styleUrl: './products.css',
 })
 export class ProductsPage implements OnInit {
   readonly products = signal<Product[]>([]);
@@ -19,11 +25,30 @@ export class ProductsPage implements OnInit {
   readonly branches = signal<Branch[]>([]);
   readonly formOpen = signal(false);
   readonly stockOpen = signal(false);
+  readonly stockEditing = signal(false);
+  readonly stockSearch = signal('');
   readonly productList = new ListQueryState();
-  readonly stockList = new ListQueryState();
   form: Partial<Product> = { name: '', sku: '', unit_price: 0, is_active: true };
   editingId: number | null = null;
   stockForm = { product_id: null as number | null, branch_id: null as number | null, quantity: 0 };
+
+  readonly branchStockCards = computed<BranchStockCard[]>(() => {
+    const term = this.stockSearch().trim().toLowerCase();
+    const stocks = this.stocks();
+    const cards = this.branches().map((branch) => {
+      let branchStocks = stocks.filter((s) => s.branch_id === branch.id);
+      if (term) {
+        branchStocks = branchStocks.filter((s) => {
+          const name = (s.product?.name || '').toLowerCase();
+          const sku = (s.product?.sku || '').toLowerCase();
+          return name.includes(term) || sku.includes(term);
+        });
+      }
+      return { branch, stocks: branchStocks };
+    });
+    if (!term) return cards;
+    return cards.filter((card) => card.stocks.length > 0);
+  });
 
   constructor(
     private readonly api: ApiService,
@@ -44,25 +69,15 @@ export class ProductsPage implements OnInit {
   }
 
   reloadStocks() {
-    this.api
-      .get<PaginatedResponse<ProductStock>>('/product-stocks', this.stockList.params())
-      .subscribe((res) => this.stockList.apply(res, (data) => this.stocks.set(data)));
+    this.api.get<ProductStock[]>('/product-stocks').subscribe((data) => this.stocks.set(data));
   }
 
   searchProducts() {
     this.productList.runSearch(() => this.reloadProducts());
   }
 
-  searchStocks() {
-    this.stockList.runSearch(() => this.reloadStocks());
-  }
-
   goToProductPage(page: number) {
     this.productList.goToPage(page, () => this.reloadProducts());
-  }
-
-  goToStockPage(page: number) {
-    this.stockList.goToPage(page, () => this.reloadStocks());
   }
 
   openCreate() {
@@ -86,12 +101,24 @@ export class ProductsPage implements OnInit {
     this.form = { name: '', sku: '', unit_price: 0, is_active: true };
   }
 
-  openStock() {
-    this.stockForm = { product_id: null, branch_id: null, quantity: 0 };
+  openAddStock(branchId: number) {
+    this.stockEditing.set(false);
+    this.stockForm = { product_id: null, branch_id: branchId, quantity: 0 };
+    this.stockOpen.set(true);
+  }
+
+  openUpdateStock(stock: ProductStock) {
+    this.stockEditing.set(true);
+    this.stockForm = {
+      product_id: stock.product_id,
+      branch_id: stock.branch_id,
+      quantity: stock.quantity,
+    };
     this.stockOpen.set(true);
   }
 
   closeStock() {
+    this.stockEditing.set(false);
     this.stockForm = { product_id: null, branch_id: null, quantity: 0 };
     this.stockOpen.set(false);
   }

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { ApiService } from '../../core/api/api.service';
 import { Attendance, Branch, ClassSchedule, Student } from '../../core/models';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
@@ -11,8 +11,8 @@ describe('AttendancePage', () => {
   let api: jasmine.SpyObj<ApiService>;
   let confirm: jasmine.SpyObj<ConfirmService>;
 
-  const branch: Branch = { id: 1, name: 'Centro', is_active: true };
-  const inactiveBranch: Branch = { id: 2, name: 'Cerrada', is_active: false };
+  const branch: Branch = { id: 1, name: 'Centro', is_active: true, color: '#C45C26' };
+  const inactiveBranch: Branch = { id: 2, name: 'Cerrada', is_active: false, color: '#64748B' };
   const student: Student = {
     id: 10,
     first_name: 'Ana',
@@ -27,7 +27,7 @@ describe('AttendancePage', () => {
     start_time: '10:00:00',
     end_time: '11:00:00',
     is_active: true,
-    instructor: { id: 5, name: 'Sensei Koji', is_active: true },
+    instructor: { id: 5, name: 'Sensei Koji', is_active: true, color: '#3B82F6' },
   };
   const scheduleEvening: ClassSchedule = {
     id: 101,
@@ -37,7 +37,7 @@ describe('AttendancePage', () => {
     start_time: '18:00:00',
     end_time: '20:00:00',
     is_active: true,
-    instructor: { id: 5, name: 'Sensei Koji', is_active: true },
+    instructor: { id: 5, name: 'Sensei Koji', is_active: true, color: '#3B82F6' },
   };
   const inactiveSchedule: ClassSchedule = {
     id: 102,
@@ -241,5 +241,52 @@ describe('AttendancePage', () => {
     ]);
     expect(component.isPresent(10)).toBeTrue();
     expect(component.isPresent(99)).toBeFalse();
+  });
+
+  it('muestra el mensaje de error al fallar el POST de asistencia', async () => {
+    component.date = '2026-07-30';
+    component.ngOnInit();
+    api.post.and.returnValue(
+      throwError(() => ({
+        error: {
+          message: 'El horario no corresponde al día de la fecha indicada.',
+          errors: {
+            class_schedule_id: ['El horario no corresponde al día de la fecha indicada.'],
+          },
+        },
+      })),
+    );
+
+    await component.toggle(student);
+
+    expect(component.error).toBe('El horario no corresponde al día de la fecha indicada.');
+  });
+
+  it('muestra el primer error de campo si no hay message', async () => {
+    component.date = '2026-07-30';
+    component.ngOnInit();
+    api.post.and.returnValue(
+      throwError(() => ({
+        error: {
+          errors: {
+            branch_id: ['La sucursal no coincide con la del horario seleccionado.'],
+          },
+        },
+      })),
+    );
+
+    await component.toggle(student);
+
+    expect(component.error).toBe('La sucursal no coincide con la del horario seleccionado.');
+  });
+
+  it('limpia el error al cambiar de fecha', () => {
+    component.date = '2026-07-30';
+    component.ngOnInit();
+    component.error = 'Error previo';
+
+    component.selectDate('2026-07-31');
+
+    expect(component.error).toBe('');
   });
 });

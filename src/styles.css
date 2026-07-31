@@ -117,6 +117,46 @@ textarea {
   gap: 0.5rem !important;
 }
 
+.color-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.color-field input[type='color'] {
+  width: 2.5rem;
+  height: 2.35rem;
+  padding: 0.15rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.color-field input[type='text'],
+.color-field input:not([type='color']) {
+  flex: 1;
+  min-width: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: 0.02em;
+}
+
+.color-swatch {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 4px;
+  border: 1px solid var(--border-strong);
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.color-code {
+  margin-left: 0.4rem;
+  font-size: 0.8rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: var(--text-soft);
+  vertical-align: middle;
+}
+
 .actions {
   display: flex;
   gap: 0.5rem;

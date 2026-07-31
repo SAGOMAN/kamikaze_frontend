@@ -21,6 +21,7 @@
     <table>
       <thead>
         <tr>
+          <th>Color</th>
           <th>Nombre</th>
           <th>Contacto</th>
           <th>Estado</th>
@@ -30,6 +31,10 @@
       <tbody>
         @for (item of items(); track item.id) {
           <tr>
+            <td>
+              <span class="color-swatch" [style.background]="item.color" [title]="item.color"></span>
+              <span class="color-code">{{ item.color }}</span>
+            </td>
             <td>{{ item.name }}</td>
             <td>{{ item.phone || item.email || '—' }}</td>
             <td>{{ item.is_active ? 'Activo' : 'Inactivo' }}</td>
@@ -62,6 +67,26 @@
       <label>
         Correo
         <input type="email" [(ngModel)]="form.email" name="email" />
+      </label>
+      <label>
+        Color
+        <span class="color-field">
+          <input
+            type="color"
+            [ngModel]="(form.color || '#64748B').toLowerCase()"
+            (ngModelChange)="onColorPicker($event)"
+            name="color_picker"
+          />
+          <input
+            type="text"
+            [(ngModel)]="form.color"
+            name="color"
+            pattern="^#[0-9A-Fa-f]{6}$"
+            maxlength="7"
+            required
+            placeholder="#64748B"
+          />
+        </span>
       </label>
       <label class="checkbox">
         <input type="checkbox" [(ngModel)]="form.is_active" name="is_active" />

@@ -13,7 +13,6 @@
         (keyup.enter)="searchProducts()"
       />
       <button type="button" class="btn ghost" (click)="searchProducts()">Buscar</button>
-      <button type="button" class="btn ghost" (click)="openStock()">Ajustar stock</button>
       <button type="button" class="btn" (click)="openCreate()">Nuevo producto</button>
     </div>
   </header>
@@ -46,39 +45,67 @@
 
   <app-list-pager [meta]="productList.meta()" (pageChange)="goToProductPage($event)" />
 
-  <h2 class="section-title">Stock por sucursal</h2>
-  <div class="filters" style="margin-bottom: 0.75rem">
-    <input
-      type="search"
-      placeholder="Buscar stock…"
-      [(ngModel)]="stockList.search"
-      name="stockSearch"
-      (keyup.enter)="searchStocks()"
-    />
-    <button type="button" class="btn ghost" (click)="searchStocks()">Buscar</button>
-  </div>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Producto</th>
-          <th>Sucursal</th>
-          <th>Cantidad</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (s of stocks(); track s.id) {
-          <tr>
-            <td>{{ s.product?.name || s.product_id }}</td>
-            <td>{{ s.branch?.name || s.branch_id }}</td>
-            <td>{{ s.quantity }}</td>
-          </tr>
-        }
-      </tbody>
-    </table>
+  <div class="stock-section-head">
+    <h2 class="section-title">Stock por sucursal</h2>
+    <div class="filters">
+      <input
+        type="search"
+        placeholder="Filtrar productos en stock…"
+        [ngModel]="stockSearch()"
+        (ngModelChange)="stockSearch.set($event)"
+        name="stockSearch"
+      />
+    </div>
   </div>
 
-  <app-list-pager [meta]="stockList.meta()" (pageChange)="goToStockPage($event)" />
+  <div class="stock-branch-grid">
+    @for (card of branchStockCards(); track card.branch.id) {
+      <article class="panel stock-branch-card">
+        <header class="stock-branch-card-head">
+          <div>
+            <h3>{{ card.branch.name }}</h3>
+            <p>
+              {{ card.stocks.length }}
+              {{ card.stocks.length === 1 ? 'producto' : 'productos' }}
+            </p>
+          </div>
+          <button type="button" class="btn" (click)="openAddStock(card.branch.id)">
+            Agregar producto
+          </button>
+        </header>
+
+        @if (card.stocks.length === 0) {
+          <p class="stock-branch-empty">Sin productos asignados en esta sucursal.</p>
+        } @else {
+          <ul class="stock-product-list">
+            @for (s of card.stocks; track s.id) {
+              <li class="stock-product-row">
+                <div class="stock-product-info">
+                  <strong>{{ s.product?.name || s.product_id }}</strong>
+                  <span>{{ s.product?.sku || 'Sin SKU' }}</span>
+                </div>
+                <div class="stock-product-qty">
+                  <span class="stock-qty-label">Cantidad</span>
+                  <span class="stock-qty-value">{{ s.quantity }}</span>
+                </div>
+                <button type="button" class="btn ghost" (click)="openUpdateStock(s)">
+                  Actualizar
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </article>
+    } @empty {
+      <p class="stock-branch-empty panel">
+        @if (stockSearch().trim()) {
+          No hay productos que coincidan con el filtro.
+        } @else {
+          No hay sucursales registradas.
+        }
+      </p>
+    }
+  </div>
 
   <app-modal
     [open]="formOpen()"
@@ -111,11 +138,20 @@
     </div>
   </app-modal>
 
-  <app-modal [open]="stockOpen()" title="Ajustar stock" (closed)="closeStock()">
+  <app-modal
+    [open]="stockOpen()"
+    [title]="stockEditing() ? 'Actualizar stock' : 'Agregar producto a sucursal'"
+    (closed)="closeStock()"
+  >
     <form id="stock-form" class="form-grid" (ngSubmit)="saveStock()">
       <label>
         Producto
-        <select [(ngModel)]="stockForm.product_id" name="stock_product" required>
+        <select
+          [(ngModel)]="stockForm.product_id"
+          name="stock_product"
+          required
+          [disabled]="stockEditing()"
+        >
           <option [ngValue]="null" disabled>Selecciona</option>
           @for (p of catalog(); track p.id) {
             <option [ngValue]="p.id">{{ p.name }}</option>
@@ -124,7 +160,12 @@
       </label>
       <label>
         Sucursal
-        <select [(ngModel)]="stockForm.branch_id" name="stock_branch" required>
+        <select
+          [(ngModel)]="stockForm.branch_id"
+          name="stock_branch"
+          required
+          [disabled]="true"
+        >
           <option [ngValue]="null" disabled>Selecciona</option>
           @for (b of branches(); track b.id) {
             <option [ngValue]="b.id">{{ b.name }}</option>
@@ -138,7 +179,9 @@
     </form>
     <div modalFooter class="actions modal-actions">
       <button class="btn ghost" type="button" (click)="closeStock()">Cancelar</button>
-      <button class="btn" type="submit" form="stock-form">Guardar stock</button>
+      <button class="btn" type="submit" form="stock-form">
+        {{ stockEditing() ? 'Actualizar' : 'Agregar' }}
+      </button>
     </div>
   </app-modal>
 </section>
