@@ -5,6 +5,14 @@
       <p>Catálogo y stock por sucursal.</p>
     </div>
     <div class="filters">
+      <input
+        type="search"
+        placeholder="Buscar producto…"
+        [(ngModel)]="productList.search"
+        name="productSearch"
+        (keyup.enter)="searchProducts()"
+      />
+      <button type="button" class="btn ghost" (click)="searchProducts()">Buscar</button>
       <button type="button" class="btn ghost" (click)="openStock()">Ajustar stock</button>
       <button type="button" class="btn" (click)="openCreate()">Nuevo producto</button>
     </div>
@@ -36,7 +44,19 @@
     </table>
   </div>
 
+  <app-list-pager [meta]="productList.meta()" (pageChange)="goToProductPage($event)" />
+
   <h2 class="section-title">Stock por sucursal</h2>
+  <div class="filters" style="margin-bottom: 0.75rem">
+    <input
+      type="search"
+      placeholder="Buscar stock…"
+      [(ngModel)]="stockList.search"
+      name="stockSearch"
+      (keyup.enter)="searchStocks()"
+    />
+    <button type="button" class="btn ghost" (click)="searchStocks()">Buscar</button>
+  </div>
   <div class="table-wrap">
     <table>
       <thead>
@@ -58,12 +78,14 @@
     </table>
   </div>
 
+  <app-list-pager [meta]="stockList.meta()" (pageChange)="goToStockPage($event)" />
+
   <app-modal
     [open]="formOpen()"
     [title]="editingId ? 'Editar producto' : 'Nuevo producto'"
     (closed)="closeForm()"
   >
-    <form class="form-grid" (ngSubmit)="save()">
+    <form id="product-form" class="form-grid" (ngSubmit)="save()">
       <label>
         Nombre
         <input [(ngModel)]="form.name" name="name" required />
@@ -80,20 +102,22 @@
         <input type="checkbox" [(ngModel)]="form.is_active" name="is_active" />
         Activo
       </label>
-      <div class="actions modal-actions">
-        <button class="btn ghost" type="button" (click)="closeForm()">Cancelar</button>
-        <button class="btn" type="submit">{{ editingId ? 'Guardar cambios' : 'Crear' }}</button>
-      </div>
     </form>
+    <div modalFooter class="actions modal-actions">
+      <button class="btn ghost" type="button" (click)="closeForm()">Cancelar</button>
+      <button class="btn" type="submit" form="product-form">
+        {{ editingId ? 'Guardar cambios' : 'Crear' }}
+      </button>
+    </div>
   </app-modal>
 
   <app-modal [open]="stockOpen()" title="Ajustar stock" (closed)="closeStock()">
-    <form class="form-grid" (ngSubmit)="saveStock()">
+    <form id="stock-form" class="form-grid" (ngSubmit)="saveStock()">
       <label>
         Producto
         <select [(ngModel)]="stockForm.product_id" name="stock_product" required>
           <option [ngValue]="null" disabled>Selecciona</option>
-          @for (p of products(); track p.id) {
+          @for (p of catalog(); track p.id) {
             <option [ngValue]="p.id">{{ p.name }}</option>
           }
         </select>
@@ -111,10 +135,10 @@
         Cantidad
         <input type="number" min="0" [(ngModel)]="stockForm.quantity" name="quantity" required />
       </label>
-      <div class="actions modal-actions">
-        <button class="btn ghost" type="button" (click)="closeStock()">Cancelar</button>
-        <button class="btn" type="submit">Guardar stock</button>
-      </div>
     </form>
+    <div modalFooter class="actions modal-actions">
+      <button class="btn ghost" type="button" (click)="closeStock()">Cancelar</button>
+      <button class="btn" type="submit" form="stock-form">Guardar stock</button>
+    </div>
   </app-modal>
 </section>

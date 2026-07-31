@@ -1,13 +1,15 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
-import { Branch, ClassSchedule, Instructor } from '../../core/models';
+import { ListQueryState } from '../../core/list-query';
+import { Branch, ClassSchedule, Instructor, PaginatedResponse } from '../../core/models';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
+import { ListPager } from '../../shared/list-pager/list-pager';
 import { Modal } from '../../shared/modal/modal';
 
 @Component({
   selector: 'app-schedules',
-  imports: [FormsModule, Modal],
+  imports: [FormsModule, Modal, ListPager],
   templateUrl: './schedules.html',
 })
 export class SchedulesPage implements OnInit {
@@ -16,6 +18,7 @@ export class SchedulesPage implements OnInit {
   readonly instructors = signal<Instructor[]>([]);
   readonly branches = signal<Branch[]>([]);
   readonly formOpen = signal(false);
+  readonly list = new ListQueryState();
   form: Partial<ClassSchedule> = {
     instructor_id: undefined,
     branch_id: undefined,
@@ -39,7 +42,17 @@ export class SchedulesPage implements OnInit {
   }
 
   reload() {
-    this.api.get<ClassSchedule[]>('/class-schedules').subscribe((data) => this.items.set(data));
+    this.api
+      .get<PaginatedResponse<ClassSchedule>>('/class-schedules', this.list.params())
+      .subscribe((res) => this.list.apply(res, (data) => this.items.set(data)));
+  }
+
+  searchNow() {
+    this.list.runSearch(() => this.reload());
+  }
+
+  goToPage(page: number) {
+    this.list.goToPage(page, () => this.reload());
   }
 
   dayName(day: number) {

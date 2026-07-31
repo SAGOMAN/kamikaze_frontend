@@ -5,6 +5,18 @@ export interface Branch {
   is_active: boolean;
 }
 
+export interface PaginationMeta {
+  current_page: number;
+  per_page: number;
+  total: number;
+  last_page: number;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: PaginationMeta;
+}
+
 export interface Student {
   id: number;
   first_name: string;
@@ -33,10 +45,12 @@ export interface Attendance {
   id: number;
   student_id: number;
   branch_id: number;
+  class_schedule_id?: number | null;
   attendance_date: string;
   notes?: string | null;
   student?: Student;
   branch?: Branch;
+  class_schedule?: ClassSchedule;
 }
 
 export interface Product {

@@ -21,6 +21,9 @@ import { Component, input, output } from '@angular/core';
           <div class="modal-body">
             <ng-content />
           </div>
+          <footer class="modal-footer">
+            <ng-content select="[modalFooter]" />
+          </footer>
         </div>
       </div>
     }

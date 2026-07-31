@@ -1,17 +1,13 @@
-<section class="page">
+<section class="page attendance-page">
   <header class="page-header">
     <div>
       <h1>Asistencia</h1>
-      <p>Marca asistencia por fecha y sucursal.</p>
+      <p>Elige el día en el calendario y marca asistencia por sucursal y horario.</p>
     </div>
     <div class="filters">
       <label>
-        Fecha
-        <input type="date" [(ngModel)]="date" name="date" (change)="reload()" />
-      </label>
-      <label>
         Sucursal
-        <select [(ngModel)]="branchId" name="branchId" (ngModelChange)="reload()">
+        <select [(ngModel)]="branchId" name="branchId" (ngModelChange)="onBranchChange()">
           @for (b of branches(); track b.id) {
             <option [ngValue]="b.id">{{ b.name }}</option>
           }
@@ -20,31 +16,80 @@
     </div>
   </header>
 
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Alumno</th>
-          <th>Asistió</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (s of students(); track s.id) {
-          <tr>
-            <td>{{ label(s) }}</td>
-            <td>
-              <button
-                type="button"
-                class="btn"
-                [class.ghost]="!isPresent(s.id)"
-                (click)="toggle(s)"
-              >
-                {{ isPresent(s.id) ? 'Presente' : 'Marcar' }}
-              </button>
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
+  <div class="attendance-layout">
+    <aside class="panel attendance-calendar">
+      <full-calendar #calendar [options]="calendarOptions"></full-calendar>
+      <p class="calendar-legend">
+        <span class="legend-dot"></span>
+        Días con horario en la sucursal
+      </p>
+    </aside>
+
+    <div class="attendance-detail">
+      <div class="panel attendance-day-card">
+        <div class="attendance-day-meta">
+          <h2>{{ selectedDateLabel() }}</h2>
+          <p>{{ presentCount() }} presente{{ presentCount() === 1 ? '' : 's' }} en este horario</p>
+        </div>
+        <label class="schedule-field">
+          Horario
+          <select
+            [(ngModel)]="scheduleId"
+            name="scheduleId"
+            (ngModelChange)="reload()"
+            [disabled]="!schedules().length"
+          >
+            @for (s of schedules(); track s.id) {
+              <option [ngValue]="s.id">{{ scheduleLabel(s) }}</option>
+            }
+          </select>
+        </label>
+      </div>
+
+      @if (!schedules().length) {
+        <div class="panel attendance-empty">
+          <p>No hay horarios activos para esta sucursal en el día seleccionado.</p>
+        </div>
+      } @else {
+        <div class="filters" style="margin-bottom: 0.75rem">
+          <input
+            type="search"
+            placeholder="Buscar alumno…"
+            [(ngModel)]="studentList.search"
+            name="studentSearch"
+            (keyup.enter)="searchStudents()"
+          />
+          <button type="button" class="btn ghost" (click)="searchStudents()">Buscar</button>
+        </div>
+        <div class="table-wrap panel">
+          <table>
+            <thead>
+              <tr>
+                <th>Alumno</th>
+                <th>Asistió</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (s of students(); track s.id) {
+                <tr>
+                  <td>{{ label(s) }}</td>
+                  <td>
+                    <button
+                      type="button"
+                      class="btn"
+                      [class.ghost]="!isPresent(s.id)"
+                      (click)="toggle(s)"
+                    >
+                      {{ isPresent(s.id) ? 'Presente' : 'Marcar' }}
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <app-list-pager [meta]="studentList.meta()" (pageChange)="goToStudentPage($event)" />
+      }
+    </div>
   </div>
 </section>

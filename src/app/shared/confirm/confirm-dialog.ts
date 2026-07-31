@@ -12,11 +12,13 @@ import { ConfirmService } from './confirm.service';
           </header>
           <div class="modal-body">
             <p class="confirm-message">{{ req.message }}</p>
+          </div>
+          <footer class="modal-footer">
             <div class="actions modal-actions">
               <button type="button" class="btn ghost" (click)="confirm.respond(false)">Cancelar</button>
               <button type="button" class="btn danger" (click)="confirm.respond(true)">Eliminar</button>
             </div>
-          </div>
+          </footer>
         </div>
       </div>
     }

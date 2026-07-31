@@ -1,19 +1,23 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
-import { Branch, Expense } from '../../core/models';
+import { ListQueryState } from '../../core/list-query';
+import { Branch, Expense, PaginatedResponse } from '../../core/models';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
+import { TimestampPipe } from '../../shared/date/timestamp.pipe';
+import { ListPager } from '../../shared/list-pager/list-pager';
 import { Modal } from '../../shared/modal/modal';
 
 @Component({
   selector: 'app-expenses',
-  imports: [FormsModule, Modal],
+  imports: [FormsModule, Modal, TimestampPipe, ListPager],
   templateUrl: './expenses.html',
 })
 export class ExpensesPage implements OnInit {
   readonly items = signal<Expense[]>([]);
   readonly branches = signal<Branch[]>([]);
   readonly formOpen = signal(false);
+  readonly list = new ListQueryState();
   form: Partial<Expense> = {
     category: '',
     description: '',
@@ -35,7 +39,17 @@ export class ExpensesPage implements OnInit {
   }
 
   reload() {
-    this.api.get<Expense[]>('/expenses').subscribe((data) => this.items.set(data));
+    this.api
+      .get<PaginatedResponse<Expense>>('/expenses', this.list.params())
+      .subscribe((res) => this.list.apply(res, (data) => this.items.set(data)));
+  }
+
+  searchNow() {
+    this.list.runSearch(() => this.reload());
+  }
+
+  goToPage(page: number) {
+    this.list.goToPage(page, () => this.reload());
   }
 
   openCreate() {

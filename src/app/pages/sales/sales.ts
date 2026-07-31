@@ -1,8 +1,11 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
-import { Branch, Product, Sale } from '../../core/models';
+import { ListQueryState } from '../../core/list-query';
+import { Branch, PaginatedResponse, Product, Sale } from '../../core/models';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
+import { TimestampPipe } from '../../shared/date/timestamp.pipe';
+import { ListPager } from '../../shared/list-pager/list-pager';
 import { Modal } from '../../shared/modal/modal';
 
 interface DraftItem {
@@ -12,14 +15,16 @@ interface DraftItem {
 
 @Component({
   selector: 'app-sales',
-  imports: [FormsModule, Modal],
+  imports: [FormsModule, Modal, TimestampPipe, ListPager],
   templateUrl: './sales.html',
+  styleUrl: './sales.css',
 })
 export class SalesPage implements OnInit {
   readonly sales = signal<Sale[]>([]);
   readonly branches = signal<Branch[]>([]);
   readonly products = signal<Product[]>([]);
   readonly formOpen = signal(false);
+  readonly list = new ListQueryState();
   branchId: number | null = null;
   saleDate = new Date().toISOString().slice(0, 10);
   notes = '';
@@ -41,7 +46,17 @@ export class SalesPage implements OnInit {
   }
 
   reload() {
-    this.api.get<Sale[]>('/sales').subscribe((data) => this.sales.set(data));
+    this.api
+      .get<PaginatedResponse<Sale>>('/sales', this.list.params())
+      .subscribe((res) => this.list.apply(res, (data) => this.sales.set(data)));
+  }
+
+  searchNow() {
+    this.list.runSearch(() => this.reload());
+  }
+
+  goToPage(page: number) {
+    this.list.goToPage(page, () => this.reload());
   }
 
   openCreate() {
@@ -64,6 +79,13 @@ export class SalesPage implements OnInit {
 
   addItem() {
     this.items.push({ product_id: null, quantity: 1 });
+  }
+
+  removeItem(index: number) {
+    if (this.items.length <= 1) {
+      return;
+    }
+    this.items.splice(index, 1);
   }
 
   save() {

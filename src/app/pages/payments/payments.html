@@ -4,7 +4,17 @@
       <h1>Mensualidades</h1>
       <p>Registro de pagos con notas opcionales.</p>
     </div>
-    <button type="button" class="btn" (click)="openCreate()">Registrar pago</button>
+    <div class="filters">
+      <input
+        type="search"
+        placeholder="Buscar alumno, período…"
+        [(ngModel)]="list.search"
+        name="search"
+        (keyup.enter)="searchNow()"
+      />
+      <button type="button" class="btn ghost" (click)="searchNow()">Buscar</button>
+      <button type="button" class="btn" (click)="openCreate()">Registrar pago</button>
+    </div>
   </header>
 
   <div class="table-wrap">
@@ -31,7 +41,7 @@
             </td>
             <td>{{ item.period_month }}</td>
             <td>{{ item.amount }}</td>
-            <td>{{ item.payment_date }}</td>
+            <td>{{ item.payment_date | timestamp }}</td>
             <td>{{ item.notes || '—' }}</td>
             <td class="row-actions">
               <button type="button" class="btn ghost" (click)="edit(item)">Editar</button>
@@ -43,12 +53,14 @@
     </table>
   </div>
 
+  <app-list-pager [meta]="list.meta()" (pageChange)="goToPage($event)" />
+
   <app-modal
     [open]="formOpen()"
     [title]="editingId ? 'Editar pago' : 'Registrar pago'"
     (closed)="closeForm()"
   >
-    <form class="form-grid" (ngSubmit)="save()">
+    <form id="payment-form" class="form-grid" (ngSubmit)="save()">
       <label>
         Alumno
         <select [(ngModel)]="form.student_id" name="student_id" required>
@@ -78,10 +90,12 @@
         Notas
         <textarea [(ngModel)]="form.notes" name="notes" rows="2"></textarea>
       </label>
-      <div class="actions modal-actions">
-        <button class="btn ghost" type="button" (click)="closeForm()">Cancelar</button>
-        <button class="btn" type="submit">{{ editingId ? 'Guardar cambios' : 'Registrar' }}</button>
-      </div>
     </form>
+    <div modalFooter class="actions modal-actions">
+      <button class="btn ghost" type="button" (click)="closeForm()">Cancelar</button>
+      <button class="btn" type="submit" form="payment-form">
+        {{ editingId ? 'Guardar cambios' : 'Registrar' }}
+      </button>
+    </div>
   </app-modal>
 </section>

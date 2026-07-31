@@ -4,7 +4,17 @@
       <h1>Gastos</h1>
       <p>Egresos operativos (renta, servicios, etc.).</p>
     </div>
-    <button type="button" class="btn" (click)="openCreate()">Registrar gasto</button>
+    <div class="filters">
+      <input
+        type="search"
+        placeholder="Buscar…"
+        [(ngModel)]="list.search"
+        name="search"
+        (keyup.enter)="searchNow()"
+      />
+      <button type="button" class="btn ghost" (click)="searchNow()">Buscar</button>
+      <button type="button" class="btn" (click)="openCreate()">Registrar gasto</button>
+    </div>
   </header>
 
   <div class="table-wrap">
@@ -21,7 +31,7 @@
       <tbody>
         @for (item of items(); track item.id) {
           <tr>
-            <td>{{ item.expense_date }}</td>
+            <td>{{ item.expense_date | timestamp }}</td>
             <td>{{ item.category }}</td>
             <td>{{ item.amount }}</td>
             <td>{{ item.branch?.name || 'General' }}</td>
@@ -35,12 +45,14 @@
     </table>
   </div>
 
+  <app-list-pager [meta]="list.meta()" (pageChange)="goToPage($event)" />
+
   <app-modal
     [open]="formOpen()"
     [title]="editingId ? 'Editar gasto' : 'Registrar gasto'"
     (closed)="closeForm()"
   >
-    <form class="form-grid" (ngSubmit)="save()">
+    <form id="expense-form" class="form-grid" (ngSubmit)="save()">
       <label>
         Categoría
         <input [(ngModel)]="form.category" name="category" required />
@@ -70,10 +82,12 @@
         Notas
         <textarea [(ngModel)]="form.notes" name="notes" rows="2"></textarea>
       </label>
-      <div class="actions modal-actions">
-        <button class="btn ghost" type="button" (click)="closeForm()">Cancelar</button>
-        <button class="btn" type="submit">{{ editingId ? 'Guardar cambios' : 'Registrar' }}</button>
-      </div>
     </form>
+    <div modalFooter class="actions modal-actions">
+      <button class="btn ghost" type="button" (click)="closeForm()">Cancelar</button>
+      <button class="btn" type="submit" form="expense-form">
+        {{ editingId ? 'Guardar cambios' : 'Registrar' }}
+      </button>
+    </div>
   </app-modal>
 </section>

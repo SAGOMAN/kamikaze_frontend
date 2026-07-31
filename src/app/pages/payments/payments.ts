@@ -1,19 +1,23 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
-import { MembershipPayment, Student } from '../../core/models';
+import { ListQueryState } from '../../core/list-query';
+import { MembershipPayment, PaginatedResponse, Student } from '../../core/models';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
+import { TimestampPipe } from '../../shared/date/timestamp.pipe';
+import { ListPager } from '../../shared/list-pager/list-pager';
 import { Modal } from '../../shared/modal/modal';
 
 @Component({
   selector: 'app-payments',
-  imports: [FormsModule, Modal],
+  imports: [FormsModule, Modal, TimestampPipe, ListPager],
   templateUrl: './payments.html',
 })
 export class PaymentsPage implements OnInit {
   readonly items = signal<MembershipPayment[]>([]);
   readonly students = signal<Student[]>([]);
   readonly formOpen = signal(false);
+  readonly list = new ListQueryState();
   form: Partial<MembershipPayment> = {
     student_id: undefined,
     amount: 0,
@@ -35,7 +39,17 @@ export class PaymentsPage implements OnInit {
   }
 
   reload() {
-    this.api.get<MembershipPayment[]>('/membership-payments').subscribe((data) => this.items.set(data));
+    this.api
+      .get<PaginatedResponse<MembershipPayment>>('/membership-payments', this.list.params())
+      .subscribe((res) => this.list.apply(res, (data) => this.items.set(data)));
+  }
+
+  searchNow() {
+    this.list.runSearch(() => this.reload());
+  }
+
+  goToPage(page: number) {
+    this.list.goToPage(page, () => this.reload());
   }
 
   studentLabel(s: Student) {

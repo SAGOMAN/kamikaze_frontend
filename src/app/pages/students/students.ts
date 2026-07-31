@@ -1,19 +1,21 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
-import { Student } from '../../core/models';
+import { ListQueryState } from '../../core/list-query';
+import { PaginatedResponse, Student } from '../../core/models';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
+import { ListPager } from '../../shared/list-pager/list-pager';
 import { Modal } from '../../shared/modal/modal';
 
 @Component({
   selector: 'app-students',
-  imports: [FormsModule, Modal],
+  imports: [FormsModule, Modal, ListPager],
   templateUrl: './students.html',
 })
 export class StudentsPage implements OnInit {
   readonly items = signal<Student[]>([]);
   readonly formOpen = signal(false);
-  search = '';
+  readonly list = new ListQueryState();
   form: Partial<Student> = {
     first_name: '',
     last_name: '',
@@ -34,7 +36,17 @@ export class StudentsPage implements OnInit {
   }
 
   reload() {
-    this.api.get<Student[]>('/students', { search: this.search }).subscribe((data) => this.items.set(data));
+    this.api
+      .get<PaginatedResponse<Student>>('/students', this.list.params())
+      .subscribe((res) => this.list.apply(res, (data) => this.items.set(data)));
+  }
+
+  searchNow() {
+    this.list.runSearch(() => this.reload());
+  }
+
+  goToPage(page: number) {
+    this.list.goToPage(page, () => this.reload());
   }
 
   displayName(s: Student) {

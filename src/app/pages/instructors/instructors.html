@@ -4,7 +4,17 @@
       <h1>Profesores</h1>
       <p>Instructores que rotan entre sucursales.</p>
     </div>
-    <button type="button" class="btn" (click)="openCreate()">Nuevo profesor</button>
+    <div class="filters">
+      <input
+        type="search"
+        placeholder="Buscar…"
+        [(ngModel)]="list.search"
+        name="search"
+        (keyup.enter)="searchNow()"
+      />
+      <button type="button" class="btn ghost" (click)="searchNow()">Buscar</button>
+      <button type="button" class="btn" (click)="openCreate()">Nuevo profesor</button>
+    </div>
   </header>
 
   <div class="table-wrap">
@@ -33,12 +43,14 @@
     </table>
   </div>
 
+  <app-list-pager [meta]="list.meta()" (pageChange)="goToPage($event)" />
+
   <app-modal
     [open]="formOpen()"
     [title]="editingId ? 'Editar profesor' : 'Nuevo profesor'"
     (closed)="closeForm()"
   >
-    <form class="form-grid" (ngSubmit)="save()">
+    <form id="instructor-form" class="form-grid" (ngSubmit)="save()">
       <label>
         Nombre
         <input [(ngModel)]="form.name" name="name" required />
@@ -59,10 +71,12 @@
         Notas
         <textarea [(ngModel)]="form.notes" name="notes" rows="2"></textarea>
       </label>
-      <div class="actions modal-actions">
-        <button class="btn ghost" type="button" (click)="closeForm()">Cancelar</button>
-        <button class="btn" type="submit">{{ editingId ? 'Guardar cambios' : 'Crear' }}</button>
-      </div>
     </form>
+    <div modalFooter class="actions modal-actions">
+      <button class="btn ghost" type="button" (click)="closeForm()">Cancelar</button>
+      <button class="btn" type="submit" form="instructor-form">
+        {{ editingId ? 'Guardar cambios' : 'Crear' }}
+      </button>
+    </div>
   </app-modal>
 </section>

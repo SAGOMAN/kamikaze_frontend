@@ -1,18 +1,21 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
-import { Branch } from '../../core/models';
+import { ListQueryState } from '../../core/list-query';
+import { Branch, PaginatedResponse } from '../../core/models';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
+import { ListPager } from '../../shared/list-pager/list-pager';
 import { Modal } from '../../shared/modal/modal';
 
 @Component({
   selector: 'app-branches',
-  imports: [FormsModule, Modal],
+  imports: [FormsModule, Modal, ListPager],
   templateUrl: './branches.html',
 })
 export class BranchesPage implements OnInit {
   readonly items = signal<Branch[]>([]);
   readonly formOpen = signal(false);
+  readonly list = new ListQueryState();
   form: Partial<Branch> = { name: '', address: '', is_active: true };
   editingId: number | null = null;
 
@@ -26,7 +29,17 @@ export class BranchesPage implements OnInit {
   }
 
   reload() {
-    this.api.get<Branch[]>('/branches').subscribe((data) => this.items.set(data));
+    this.api
+      .get<PaginatedResponse<Branch>>('/branches', this.list.params())
+      .subscribe((res) => this.list.apply(res, (data) => this.items.set(data)));
+  }
+
+  searchNow() {
+    this.list.runSearch(() => this.reload());
+  }
+
+  goToPage(page: number) {
+    this.list.goToPage(page, () => this.reload());
   }
 
   openCreate() {
@@ -52,9 +65,8 @@ export class BranchesPage implements OnInit {
 
   save() {
     const req = this.editingId
-      ? this.api.put<Branch>(`/branches/${this.editingId}`, this.form)
-      : this.api.post<Branch>('/branches', this.form);
-
+      ? this.api.put(`/branches/${this.editingId}`, this.form)
+      : this.api.post('/branches', this.form);
     req.subscribe(() => {
       this.closeForm();
       this.reload();

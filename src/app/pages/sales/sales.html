@@ -4,7 +4,17 @@
       <h1>Ventas</h1>
       <p>Registro de ventas con descuento de inventario.</p>
     </div>
-    <button type="button" class="btn" (click)="openCreate()">Registrar venta</button>
+    <div class="filters">
+      <input
+        type="search"
+        placeholder="Buscar…"
+        [(ngModel)]="list.search"
+        name="search"
+        (keyup.enter)="searchNow()"
+      />
+      <button type="button" class="btn ghost" (click)="searchNow()">Buscar</button>
+      <button type="button" class="btn" (click)="openCreate()">Registrar venta</button>
+    </div>
   </header>
 
   <div class="table-wrap">
@@ -21,7 +31,7 @@
       <tbody>
         @for (sale of sales(); track sale.id) {
           <tr>
-            <td>{{ sale.sale_date }}</td>
+            <td>{{ sale.sale_date | timestamp }}</td>
             <td>{{ sale.branch?.name || sale.branch_id }}</td>
             <td>{{ sale.total }}</td>
             <td>{{ sale.items?.length || 0 }}</td>
@@ -34,50 +44,73 @@
     </table>
   </div>
 
-  <app-modal [open]="formOpen()" title="Registrar venta" (closed)="closeForm()">
-    <form class="form-grid" (ngSubmit)="save()">
-      <label>
-        Sucursal
-        <select [(ngModel)]="branchId" name="branch_id" required>
-          @for (b of branches(); track b.id) {
-            <option [ngValue]="b.id">{{ b.name }}</option>
-          }
-        </select>
-      </label>
-      <label>
-        Fecha
-        <input type="date" [(ngModel)]="saleDate" name="sale_date" required />
-      </label>
-      <label class="full">
-        Notas
-        <input [(ngModel)]="notes" name="notes" />
-      </label>
+  <app-list-pager [meta]="list.meta()" (pageChange)="goToPage($event)" />
 
-      @for (item of items; track $index; let i = $index) {
+  <app-modal [open]="formOpen()" title="Registrar venta" (closed)="closeForm()">
+    <form id="sale-form" (ngSubmit)="save()">
+      <div class="form-grid">
         <label>
-          Producto
-          <select [(ngModel)]="item.product_id" [name]="'product_' + i" required>
-            <option [ngValue]="null" disabled>Selecciona</option>
-            @for (p of products(); track p.id) {
-              <option [ngValue]="p.id">{{ p.name }} — {{ p.unit_price }}</option>
+          Sucursal
+          <select [(ngModel)]="branchId" name="branch_id" required>
+            @for (b of branches(); track b.id) {
+              <option [ngValue]="b.id">{{ b.name }}</option>
             }
           </select>
         </label>
         <label>
-          Cantidad
-          <input type="number" min="1" [(ngModel)]="item.quantity" [name]="'qty_' + i" required />
+          Fecha
+          <input type="date" [(ngModel)]="saleDate" name="sale_date" required />
         </label>
-      }
+        <label class="full">
+          Notas
+          <input [(ngModel)]="notes" name="notes" />
+        </label>
+      </div>
+
+      <div class="sale-items">
+        <div class="sale-items-head">
+          <h3>Ítems</h3>
+          <button class="btn ghost" type="button" (click)="addItem()">+ Ítem</button>
+        </div>
+
+        <div class="sale-items-list">
+          @for (item of items; track $index; let i = $index) {
+            <div class="sale-item-row">
+              <span class="sale-item-index" aria-hidden="true">{{ i + 1 }}</span>
+              <label class="sale-item-product">
+                Producto
+                <select [(ngModel)]="item.product_id" [name]="'product_' + i" required>
+                  <option [ngValue]="null" disabled>Selecciona</option>
+                  @for (p of products(); track p.id) {
+                    <option [ngValue]="p.id">{{ p.name }} — {{ p.unit_price }}</option>
+                  }
+                </select>
+              </label>
+              <label class="sale-item-qty">
+                Cantidad
+                <input type="number" min="1" [(ngModel)]="item.quantity" [name]="'qty_' + i" required />
+              </label>
+              <button
+                type="button"
+                class="btn ghost sale-item-remove"
+                (click)="removeItem(i)"
+                [disabled]="items.length === 1"
+                aria-label="Quitar ítem"
+              >
+                Quitar
+              </button>
+            </div>
+          }
+        </div>
+      </div>
 
       @if (formError) {
-        <p class="error full">{{ formError }}</p>
+        <p class="error">{{ formError }}</p>
       }
-
-      <div class="actions modal-actions">
-        <button class="btn ghost" type="button" (click)="addItem()">+ Ítem</button>
-        <button class="btn ghost" type="button" (click)="closeForm()">Cancelar</button>
-        <button class="btn" type="submit">Registrar venta</button>
-      </div>
     </form>
+    <div modalFooter class="actions modal-actions">
+      <button class="btn ghost" type="button" (click)="closeForm()">Cancelar</button>
+      <button class="btn" type="submit" form="sale-form">Registrar venta</button>
+    </div>
   </app-modal>
 </section>

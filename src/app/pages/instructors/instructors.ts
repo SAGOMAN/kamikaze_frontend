@@ -1,18 +1,21 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
-import { Instructor } from '../../core/models';
+import { ListQueryState } from '../../core/list-query';
+import { Instructor, PaginatedResponse } from '../../core/models';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
+import { ListPager } from '../../shared/list-pager/list-pager';
 import { Modal } from '../../shared/modal/modal';
 
 @Component({
   selector: 'app-instructors',
-  imports: [FormsModule, Modal],
+  imports: [FormsModule, Modal, ListPager],
   templateUrl: './instructors.html',
 })
 export class InstructorsPage implements OnInit {
   readonly items = signal<Instructor[]>([]);
   readonly formOpen = signal(false);
+  readonly list = new ListQueryState();
   form: Partial<Instructor> = { name: '', phone: '', email: '', is_active: true, notes: '' };
   editingId: number | null = null;
 
@@ -26,7 +29,17 @@ export class InstructorsPage implements OnInit {
   }
 
   reload() {
-    this.api.get<Instructor[]>('/instructors').subscribe((data) => this.items.set(data));
+    this.api
+      .get<PaginatedResponse<Instructor>>('/instructors', this.list.params())
+      .subscribe((res) => this.list.apply(res, (data) => this.items.set(data)));
+  }
+
+  searchNow() {
+    this.list.runSearch(() => this.reload());
+  }
+
+  goToPage(page: number) {
+    this.list.goToPage(page, () => this.reload());
   }
 
   openCreate() {
