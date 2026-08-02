@@ -55,18 +55,38 @@
     [title]="editingId ? 'Editar profesor' : 'Nuevo profesor'"
     (closed)="closeForm()"
   >
-    <form id="instructor-form" class="form-grid" (ngSubmit)="save()">
+    <form #f="ngForm" id="instructor-form" class="form-grid" novalidate (ngSubmit)="save(f)">
       <label>
         Nombre
-        <input [(ngModel)]="form.name" name="name" required />
+        <input
+          [(ngModel)]="form.name"
+          name="name"
+          required
+          #nameCtrl="ngModel"
+          [class.field-invalid]="showInvalid(f, nameCtrl) || !!apiErrors['name']"
+        />
+        <app-field-error [control]="nameCtrl" [submitted]="f.submitted" [apiError]="apiErrors['name'] || ''" />
       </label>
       <label>
         Teléfono
-        <input [(ngModel)]="form.phone" name="phone" />
+        <input
+          [(ngModel)]="form.phone"
+          name="phone"
+          #phoneCtrl="ngModel"
+          [class.field-invalid]="showInvalid(f, phoneCtrl) || !!apiErrors['phone']"
+        />
+        <app-field-error [control]="phoneCtrl" [submitted]="f.submitted" [apiError]="apiErrors['phone'] || ''" />
       </label>
       <label>
         Correo
-        <input type="email" [(ngModel)]="form.email" name="email" />
+        <input
+          type="email"
+          [(ngModel)]="form.email"
+          name="email"
+          #emailCtrl="ngModel"
+          [class.field-invalid]="showInvalid(f, emailCtrl) || !!apiErrors['email']"
+        />
+        <app-field-error [control]="emailCtrl" [submitted]="f.submitted" [apiError]="apiErrors['email'] || ''" />
       </label>
       <label>
         Color
@@ -85,8 +105,16 @@
             maxlength="7"
             required
             placeholder="#64748B"
+            #colorCtrl="ngModel"
+            [class.field-invalid]="showInvalid(f, colorCtrl) || !!apiErrors['color']"
           />
         </span>
+        <app-field-error
+          [control]="colorCtrl"
+          [submitted]="f.submitted"
+          [apiError]="apiErrors['color'] || ''"
+          patternMessage="Usa formato #RRGGBB."
+        />
       </label>
       <label class="checkbox">
         <input type="checkbox" [(ngModel)]="form.is_active" name="is_active" />
@@ -94,8 +122,18 @@
       </label>
       <label class="full">
         Notas
-        <textarea [(ngModel)]="form.notes" name="notes" rows="2"></textarea>
+        <textarea
+          [(ngModel)]="form.notes"
+          name="notes"
+          rows="2"
+          #notesCtrl="ngModel"
+          [class.field-invalid]="showInvalid(f, notesCtrl) || !!apiErrors['notes']"
+        ></textarea>
+        <app-field-error [control]="notesCtrl" [submitted]="f.submitted" [apiError]="apiErrors['notes'] || ''" />
       </label>
+      @if (formError) {
+        <p class="error full">{{ formError }}</p>
+      }
     </form>
     <div modalFooter class="actions modal-actions">
       <button class="btn ghost" type="button" (click)="closeForm()">Cancelar</button>

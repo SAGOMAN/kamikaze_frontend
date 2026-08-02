@@ -112,23 +112,52 @@
     [title]="editingId ? 'Editar producto' : 'Nuevo producto'"
     (closed)="closeForm()"
   >
-    <form id="product-form" class="form-grid" (ngSubmit)="save()">
+    <form #f="ngForm" id="product-form" class="form-grid" novalidate (ngSubmit)="save(f)">
       <label>
         Nombre
-        <input [(ngModel)]="form.name" name="name" required />
+        <input
+          [(ngModel)]="form.name"
+          name="name"
+          required
+          #nameCtrl="ngModel"
+          [class.field-invalid]="showInvalid(f, nameCtrl) || !!apiErrors['name']"
+        />
+        <app-field-error [control]="nameCtrl" [submitted]="f.submitted" [apiError]="apiErrors['name'] || ''" />
       </label>
       <label>
         SKU
-        <input [(ngModel)]="form.sku" name="sku" />
+        <input
+          [(ngModel)]="form.sku"
+          name="sku"
+          #skuCtrl="ngModel"
+          [class.field-invalid]="showInvalid(f, skuCtrl) || !!apiErrors['sku']"
+        />
+        <app-field-error [control]="skuCtrl" [submitted]="f.submitted" [apiError]="apiErrors['sku'] || ''" />
       </label>
       <label>
         Precio
-        <input type="number" step="0.01" [(ngModel)]="form.unit_price" name="unit_price" required />
+        <input
+          type="number"
+          step="0.01"
+          [(ngModel)]="form.unit_price"
+          name="unit_price"
+          required
+          #priceCtrl="ngModel"
+          [class.field-invalid]="showInvalid(f, priceCtrl) || !!apiErrors['unit_price']"
+        />
+        <app-field-error
+          [control]="priceCtrl"
+          [submitted]="f.submitted"
+          [apiError]="apiErrors['unit_price'] || ''"
+        />
       </label>
       <label class="checkbox">
         <input type="checkbox" [(ngModel)]="form.is_active" name="is_active" />
         Activo
       </label>
+      @if (formError) {
+        <p class="error full">{{ formError }}</p>
+      }
     </form>
     <div modalFooter class="actions modal-actions">
       <button class="btn ghost" type="button" (click)="closeForm()">Cancelar</button>
@@ -143,39 +172,69 @@
     [title]="stockEditing() ? 'Actualizar stock' : 'Agregar producto a sucursal'"
     (closed)="closeStock()"
   >
-    <form id="stock-form" class="form-grid" (ngSubmit)="saveStock()">
+    <form #sf="ngForm" id="stock-form" class="form-grid" novalidate (ngSubmit)="saveStock(sf)">
       <label>
         Producto
         <select
           [(ngModel)]="stockForm.product_id"
-          name="stock_product"
+          name="product_id"
           required
           [disabled]="stockEditing()"
+          #stockProductCtrl="ngModel"
+          [class.field-invalid]="showInvalid(sf, stockProductCtrl) || !!stockApiErrors['product_id']"
         >
           <option [ngValue]="null" disabled>Selecciona</option>
           @for (p of catalog(); track p.id) {
             <option [ngValue]="p.id">{{ p.name }}</option>
           }
         </select>
+        <app-field-error
+          [control]="stockProductCtrl"
+          [submitted]="sf.submitted"
+          [apiError]="stockApiErrors['product_id'] || ''"
+        />
       </label>
       <label>
         Sucursal
         <select
           [(ngModel)]="stockForm.branch_id"
-          name="stock_branch"
+          name="branch_id"
           required
           [disabled]="true"
+          #stockBranchCtrl="ngModel"
+          [class.field-invalid]="showInvalid(sf, stockBranchCtrl) || !!stockApiErrors['branch_id']"
         >
           <option [ngValue]="null" disabled>Selecciona</option>
           @for (b of branches(); track b.id) {
             <option [ngValue]="b.id">{{ b.name }}</option>
           }
         </select>
+        <app-field-error
+          [control]="stockBranchCtrl"
+          [submitted]="sf.submitted"
+          [apiError]="stockApiErrors['branch_id'] || ''"
+        />
       </label>
       <label>
         Cantidad
-        <input type="number" min="0" [(ngModel)]="stockForm.quantity" name="quantity" required />
+        <input
+          type="number"
+          min="0"
+          [(ngModel)]="stockForm.quantity"
+          name="quantity"
+          required
+          #qtyCtrl="ngModel"
+          [class.field-invalid]="showInvalid(sf, qtyCtrl) || !!stockApiErrors['quantity']"
+        />
+        <app-field-error
+          [control]="qtyCtrl"
+          [submitted]="sf.submitted"
+          [apiError]="stockApiErrors['quantity'] || ''"
+        />
       </label>
+      @if (stockFormError) {
+        <p class="error full">{{ stockFormError }}</p>
+      }
     </form>
     <div modalFooter class="actions modal-actions">
       <button class="btn ghost" type="button" (click)="closeStock()">Cancelar</button>

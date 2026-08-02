@@ -116,45 +116,105 @@
     [title]="editingId ? 'Editar horario' : 'Nuevo horario'"
     (closed)="closeForm()"
   >
-    <form id="schedule-form" class="form-grid" (ngSubmit)="save()">
+    <form #f="ngForm" id="schedule-form" class="form-grid" novalidate (ngSubmit)="save(f)">
       <label>
         Profesor
-        <select [(ngModel)]="form.instructor_id" name="instructor_id" required>
+        <select
+          [(ngModel)]="form.instructor_id"
+          name="instructor_id"
+          required
+          #instructorCtrl="ngModel"
+          [class.field-invalid]="showInvalid(f, instructorCtrl) || !!apiErrors['instructor_id']"
+        >
           <option [ngValue]="undefined" disabled>Selecciona</option>
           @for (i of instructors(); track i.id) {
             <option [ngValue]="i.id">{{ i.name }}</option>
           }
         </select>
+        <app-field-error
+          [control]="instructorCtrl"
+          [submitted]="f.submitted"
+          [apiError]="apiErrors['instructor_id'] || ''"
+        />
       </label>
       <label>
         Sucursal
-        <select [(ngModel)]="form.branch_id" name="branch_id" required>
+        <select
+          [(ngModel)]="form.branch_id"
+          name="branch_id"
+          required
+          #branchCtrl="ngModel"
+          [class.field-invalid]="showInvalid(f, branchCtrl) || !!apiErrors['branch_id']"
+        >
           <option [ngValue]="undefined" disabled>Selecciona</option>
           @for (b of branches(); track b.id) {
             <option [ngValue]="b.id">{{ b.name }}</option>
           }
         </select>
+        <app-field-error
+          [control]="branchCtrl"
+          [submitted]="f.submitted"
+          [apiError]="apiErrors['branch_id'] || ''"
+        />
       </label>
       <label>
         Día
-        <select [(ngModel)]="form.day_of_week" name="day_of_week" required>
+        <select
+          [(ngModel)]="form.day_of_week"
+          name="day_of_week"
+          required
+          #dayCtrl="ngModel"
+          [class.field-invalid]="showInvalid(f, dayCtrl) || !!apiErrors['day_of_week']"
+        >
           @for (day of days; track $index; let i = $index) {
             <option [ngValue]="i">{{ day }}</option>
           }
         </select>
+        <app-field-error
+          [control]="dayCtrl"
+          [submitted]="f.submitted"
+          [apiError]="apiErrors['day_of_week'] || ''"
+        />
       </label>
       <label>
         Inicio
-        <input type="time" [(ngModel)]="form.start_time" name="start_time" required />
+        <input
+          type="time"
+          [(ngModel)]="form.start_time"
+          name="start_time"
+          required
+          #startCtrl="ngModel"
+          [class.field-invalid]="showInvalid(f, startCtrl) || !!apiErrors['start_time']"
+        />
+        <app-field-error
+          [control]="startCtrl"
+          [submitted]="f.submitted"
+          [apiError]="apiErrors['start_time'] || ''"
+        />
       </label>
       <label>
         Fin
-        <input type="time" [(ngModel)]="form.end_time" name="end_time" required />
+        <input
+          type="time"
+          [(ngModel)]="form.end_time"
+          name="end_time"
+          required
+          #endCtrl="ngModel"
+          [class.field-invalid]="showInvalid(f, endCtrl) || !!apiErrors['end_time']"
+        />
+        <app-field-error
+          [control]="endCtrl"
+          [submitted]="f.submitted"
+          [apiError]="apiErrors['end_time'] || ''"
+        />
       </label>
       <label class="checkbox">
         <input type="checkbox" [(ngModel)]="form.is_active" name="is_active" />
         Activo
       </label>
+      @if (formError) {
+        <p class="error full">{{ formError }}</p>
+      }
     </form>
     <div modalFooter class="actions modal-actions">
       @if (editingId) {

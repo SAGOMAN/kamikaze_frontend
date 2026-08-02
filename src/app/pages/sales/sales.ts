@@ -1,10 +1,13 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
 import { ListQueryState } from '../../core/list-query';
 import { Branch, PaginatedResponse, Product, Sale } from '../../core/models';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
 import { TimestampPipe } from '../../shared/date/timestamp.pipe';
+import { FieldError } from '../../shared/forms/field-error';
+import { parseApiError } from '../../shared/forms/parse-api-error';
+import { showInvalid } from '../../shared/forms/show-invalid';
 import { ListPager } from '../../shared/list-pager/list-pager';
 import { Modal } from '../../shared/modal/modal';
 
@@ -15,7 +18,7 @@ interface DraftItem {
 
 @Component({
   selector: 'app-sales',
-  imports: [FormsModule, Modal, TimestampPipe, ListPager],
+  imports: [FormsModule, Modal, TimestampPipe, ListPager, FieldError],
   templateUrl: './sales.html',
   styleUrl: './sales.css',
 })
@@ -30,6 +33,8 @@ export class SalesPage implements OnInit {
   notes = '';
   items: DraftItem[] = [{ product_id: null, quantity: 1 }];
   formError = '';
+  apiErrors: Record<string, string> = {};
+  readonly showInvalid = showInvalid;
 
   constructor(
     private readonly api: ApiService,
@@ -71,6 +76,7 @@ export class SalesPage implements OnInit {
 
   resetForm() {
     this.formError = '';
+    this.apiErrors = {};
     this.saleDate = new Date().toISOString().slice(0, 10);
     this.notes = '';
     this.items = [{ product_id: null, quantity: 1 }];
@@ -88,8 +94,21 @@ export class SalesPage implements OnInit {
     this.items.splice(index, 1);
   }
 
-  save() {
+  /** Stock del producto en la sucursal seleccionada (0 si no hay registro). */
+  stockFor(product: Product): number {
+    const branchId = this.branchId;
+    if (branchId == null) {
+      return 0;
+    }
+    return product.stocks?.find((s) => s.branch_id === branchId)?.quantity ?? 0;
+  }
+
+  save(f: NgForm) {
     this.formError = '';
+    this.apiErrors = {};
+    if (f.invalid) {
+      return;
+    }
     this.api
       .post('/sales', {
         branch_id: this.branchId,
@@ -103,7 +122,9 @@ export class SalesPage implements OnInit {
           this.reload();
         },
         error: (err) => {
-          this.formError = err?.error?.message || err?.error?.items?.[0] || 'Error al registrar venta';
+          const parsed = parseApiError(err, 'Error al registrar venta');
+          this.formError = parsed.message;
+          this.apiErrors = parsed.fieldErrors;
         },
       });
   }

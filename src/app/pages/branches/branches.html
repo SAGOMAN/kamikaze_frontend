@@ -55,14 +55,31 @@
     [title]="editingId ? 'Editar sucursal' : 'Nueva sucursal'"
     (closed)="closeForm()"
   >
-    <form id="branch-form" class="form-grid" (ngSubmit)="save()">
+    <form #f="ngForm" id="branch-form" class="form-grid" novalidate (ngSubmit)="save(f)">
       <label>
         Nombre
-        <input [(ngModel)]="form.name" name="name" required />
+        <input
+          [(ngModel)]="form.name"
+          name="name"
+          required
+          #nameCtrl="ngModel"
+          [class.field-invalid]="showInvalid(f, nameCtrl) || !!apiErrors['name']"
+        />
+        <app-field-error [control]="nameCtrl" [submitted]="f.submitted" [apiError]="apiErrors['name'] || ''" />
       </label>
       <label>
         Dirección
-        <input [(ngModel)]="form.address" name="address" />
+        <input
+          [(ngModel)]="form.address"
+          name="address"
+          #addressCtrl="ngModel"
+          [class.field-invalid]="showInvalid(f, addressCtrl) || !!apiErrors['address']"
+        />
+        <app-field-error
+          [control]="addressCtrl"
+          [submitted]="f.submitted"
+          [apiError]="apiErrors['address'] || ''"
+        />
       </label>
       <label>
         Color
@@ -81,13 +98,24 @@
             maxlength="7"
             required
             placeholder="#64748B"
+            #colorCtrl="ngModel"
+            [class.field-invalid]="showInvalid(f, colorCtrl) || !!apiErrors['color']"
           />
         </span>
+        <app-field-error
+          [control]="colorCtrl"
+          [submitted]="f.submitted"
+          [apiError]="apiErrors['color'] || ''"
+          patternMessage="Usa formato #RRGGBB."
+        />
       </label>
       <label class="checkbox">
         <input type="checkbox" [(ngModel)]="form.is_active" name="is_active" />
         Activa
       </label>
+      @if (formError) {
+        <p class="error full">{{ formError }}</p>
+      }
     </form>
     <div modalFooter class="actions modal-actions">
       <button class="btn ghost" type="button" (click)="closeForm()">Cancelar</button>

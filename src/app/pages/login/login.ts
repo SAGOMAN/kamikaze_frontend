@@ -1,11 +1,14 @@
 import { Component, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { FieldError } from '../../shared/forms/field-error';
+import { parseApiError } from '../../shared/forms/parse-api-error';
+import { showInvalid } from '../../shared/forms/show-invalid';
 
 @Component({
   selector: 'app-login',
-  imports: [FormsModule],
+  imports: [FormsModule, FieldError],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
@@ -13,7 +16,9 @@ export class LoginPage {
   email = 'admin@hanuman.style';
   password = 'password';
   readonly error = signal('');
+  apiErrors: Record<string, string> = {};
   readonly loading = signal(false);
+  readonly showInvalid = showInvalid;
 
   constructor(
     private readonly auth: AuthService,
@@ -24,9 +29,13 @@ export class LoginPage {
     }
   }
 
-  submit() {
-    this.loading.set(true);
+  submit(f: NgForm) {
     this.error.set('');
+    this.apiErrors = {};
+    if (f.invalid) {
+      return;
+    }
+    this.loading.set(true);
     this.auth.login(this.email, this.password).subscribe({
       next: () => {
         this.loading.set(false);
@@ -34,7 +43,9 @@ export class LoginPage {
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(err?.error?.message || err?.error?.email?.[0] || 'No se pudo iniciar sesión');
+        const parsed = parseApiError(err, 'No se pudo iniciar sesión');
+        this.error.set(parsed.message);
+        this.apiErrors = parsed.fieldErrors;
       },
     });
   }

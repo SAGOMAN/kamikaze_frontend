@@ -9,6 +9,7 @@ import { ApiService } from '../../core/api/api.service';
 import { ListQueryState } from '../../core/list-query';
 import { Attendance, Branch, ClassSchedule, PaginatedResponse, Student } from '../../core/models';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
+import { parseApiError } from '../../shared/forms/parse-api-error';
 import { ListPager } from '../../shared/list-pager/list-pager';
 
 @Component({
@@ -229,35 +230,7 @@ export class AttendancePage implements OnInit {
   }
 
   setError(err: unknown, fallback: string) {
-    const body = (err as { error?: Record<string, unknown> } | null)?.error;
-    if (!body || typeof body !== 'object') {
-      this.error = fallback;
-      return;
-    }
-
-    if (typeof body['message'] === 'string' && body['message']) {
-      this.error = body['message'];
-      return;
-    }
-
-    const fieldErrors = body['errors'];
-    if (fieldErrors && typeof fieldErrors === 'object') {
-      for (const key of ['student_id', 'class_schedule_id', 'branch_id', 'attendance_date', 'record']) {
-        const field = (fieldErrors as Record<string, unknown>)[key];
-        if (Array.isArray(field) && typeof field[0] === 'string') {
-          this.error = field[0];
-          return;
-        }
-      }
-      for (const field of Object.values(fieldErrors as Record<string, unknown>)) {
-        if (Array.isArray(field) && typeof field[0] === 'string') {
-          this.error = field[0];
-          return;
-        }
-      }
-    }
-
-    this.error = fallback;
+    this.error = parseApiError(err, fallback).message;
   }
 
   async toggle(student: Student) {

@@ -1,9 +1,12 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
 import { ListQueryState } from '../../core/list-query';
 import { Branch, PaginatedResponse, Product, ProductStock } from '../../core/models';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
+import { FieldError } from '../../shared/forms/field-error';
+import { parseApiError } from '../../shared/forms/parse-api-error';
+import { showInvalid } from '../../shared/forms/show-invalid';
 import { ListPager } from '../../shared/list-pager/list-pager';
 import { Modal } from '../../shared/modal/modal';
 
@@ -14,7 +17,7 @@ export interface BranchStockCard {
 
 @Component({
   selector: 'app-products',
-  imports: [FormsModule, Modal, ListPager],
+  imports: [FormsModule, Modal, ListPager, FieldError],
   templateUrl: './products.html',
   styleUrl: './products.css',
 })
@@ -31,6 +34,11 @@ export class ProductsPage implements OnInit {
   form: Partial<Product> = { name: '', sku: '', unit_price: 0, is_active: true };
   editingId: number | null = null;
   stockForm = { product_id: null as number | null, branch_id: null as number | null, quantity: 0 };
+  formError = '';
+  apiErrors: Record<string, string> = {};
+  stockFormError = '';
+  stockApiErrors: Record<string, string> = {};
+  readonly showInvalid = showInvalid;
 
   readonly branchStockCards = computed<BranchStockCard[]>(() => {
     const term = this.stockSearch().trim().toLowerCase();
@@ -87,6 +95,8 @@ export class ProductsPage implements OnInit {
 
   edit(item: Product) {
     this.editingId = item.id;
+    this.formError = '';
+    this.apiErrors = {};
     this.form = { ...item };
     this.formOpen.set(true);
   }
@@ -98,17 +108,23 @@ export class ProductsPage implements OnInit {
 
   reset() {
     this.editingId = null;
+    this.formError = '';
+    this.apiErrors = {};
     this.form = { name: '', sku: '', unit_price: 0, is_active: true };
   }
 
   openAddStock(branchId: number) {
     this.stockEditing.set(false);
+    this.stockFormError = '';
+    this.stockApiErrors = {};
     this.stockForm = { product_id: null, branch_id: branchId, quantity: 0 };
     this.stockOpen.set(true);
   }
 
   openUpdateStock(stock: ProductStock) {
     this.stockEditing.set(true);
+    this.stockFormError = '';
+    this.stockApiErrors = {};
     this.stockForm = {
       product_id: stock.product_id,
       branch_id: stock.branch_id,
@@ -119,19 +135,33 @@ export class ProductsPage implements OnInit {
 
   closeStock() {
     this.stockEditing.set(false);
+    this.stockFormError = '';
+    this.stockApiErrors = {};
     this.stockForm = { product_id: null, branch_id: null, quantity: 0 };
     this.stockOpen.set(false);
   }
 
-  save() {
+  save(f: NgForm) {
+    this.formError = '';
+    this.apiErrors = {};
+    if (f.invalid) {
+      return;
+    }
     const req = this.editingId
       ? this.api.put(`/products/${this.editingId}`, this.form)
       : this.api.post('/products', this.form);
-    req.subscribe(() => {
-      this.closeForm();
-      this.api.get<Product[]>('/products').subscribe((data) => this.catalog.set(data));
-      this.reloadProducts();
-      this.reloadStocks();
+    req.subscribe({
+      next: () => {
+        this.closeForm();
+        this.api.get<Product[]>('/products').subscribe((data) => this.catalog.set(data));
+        this.reloadProducts();
+        this.reloadStocks();
+      },
+      error: (err) => {
+        const parsed = parseApiError(err, 'No se pudo guardar el producto');
+        this.formError = parsed.message;
+        this.apiErrors = parsed.fieldErrors;
+      },
     });
   }
 
@@ -145,10 +175,22 @@ export class ProductsPage implements OnInit {
     });
   }
 
-  saveStock() {
-    this.api.put('/product-stocks', this.stockForm).subscribe(() => {
-      this.closeStock();
-      this.reloadStocks();
+  saveStock(f: NgForm) {
+    this.stockFormError = '';
+    this.stockApiErrors = {};
+    if (f.invalid) {
+      return;
+    }
+    this.api.put('/product-stocks', this.stockForm).subscribe({
+      next: () => {
+        this.closeStock();
+        this.reloadStocks();
+      },
+      error: (err) => {
+        const parsed = parseApiError(err, 'No se pudo guardar el stock');
+        this.stockFormError = parsed.message;
+        this.stockApiErrors = parsed.fieldErrors;
+      },
     });
   }
 }

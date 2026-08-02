@@ -1,15 +1,18 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
 import { ListQueryState } from '../../core/list-query';
 import { PaginatedResponse, Student } from '../../core/models';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
+import { FieldError } from '../../shared/forms/field-error';
+import { parseApiError } from '../../shared/forms/parse-api-error';
+import { showInvalid } from '../../shared/forms/show-invalid';
 import { ListPager } from '../../shared/list-pager/list-pager';
 import { Modal } from '../../shared/modal/modal';
 
 @Component({
   selector: 'app-students',
-  imports: [FormsModule, Modal, ListPager],
+  imports: [FormsModule, Modal, ListPager, FieldError],
   templateUrl: './students.html',
 })
 export class StudentsPage implements OnInit {
@@ -25,6 +28,9 @@ export class StudentsPage implements OnInit {
     is_active: true,
   };
   editingId: number | null = null;
+  formError = '';
+  apiErrors: Record<string, string> = {};
+  readonly showInvalid = showInvalid;
 
   constructor(
     private readonly api: ApiService,
@@ -61,6 +67,8 @@ export class StudentsPage implements OnInit {
   edit(item: Student) {
     this.editingId = item.id;
     this.form = { ...item };
+    this.formError = '';
+    this.apiErrors = {};
     this.formOpen.set(true);
   }
 
@@ -71,6 +79,8 @@ export class StudentsPage implements OnInit {
 
   reset() {
     this.editingId = null;
+    this.formError = '';
+    this.apiErrors = {};
     this.form = {
       first_name: '',
       last_name: '',
@@ -81,14 +91,26 @@ export class StudentsPage implements OnInit {
     };
   }
 
-  save() {
+  save(f: NgForm) {
+    this.formError = '';
+    this.apiErrors = {};
+    if (f.invalid) {
+      return;
+    }
     const req = this.editingId
       ? this.api.put<Student>(`/students/${this.editingId}`, this.form)
       : this.api.post<Student>('/students', this.form);
 
-    req.subscribe(() => {
-      this.closeForm();
-      this.reload();
+    req.subscribe({
+      next: () => {
+        this.closeForm();
+        this.reload();
+      },
+      error: (err) => {
+        const parsed = parseApiError(err, 'No se pudo guardar el alumno');
+        this.formError = parsed.message;
+        this.apiErrors = parsed.fieldErrors;
+      },
     });
   }
 

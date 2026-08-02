@@ -1,0 +1,95 @@
+:host {
+  display: block;
+  position: relative;
+  min-width: 0;
+}
+
+.searchable-select {
+  position: relative;
+  width: 100%;
+}
+
+.searchable-select-control {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.searchable-select-control input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.searchable-select-toggle {
+  flex-shrink: 0;
+  width: 2.4rem;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  background: var(--surface);
+  color: var(--text-soft);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.searchable-select-toggle:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.searchable-select.is-invalid .searchable-select-control input,
+.searchable-select.is-invalid .searchable-select-toggle {
+  border-color: var(--error);
+}
+
+.searchable-select.is-open .searchable-select-control input,
+.searchable-select.is-open .searchable-select-toggle {
+  border-color: var(--accent, var(--border-strong));
+}
+
+.searchable-select-list {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+  max-height: 14rem;
+  overflow: auto;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.searchable-select-list li {
+  padding: 0.5rem 0.65rem;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.searchable-select-list li.is-active,
+.searchable-select-list li:hover {
+  background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent);
+}
+
+.searchable-select-list li.is-selected {
+  font-weight: 600;
+}
+
+.searchable-select-empty {
+  cursor: default;
+  color: var(--text-soft);
+  font-size: 0.9rem;
+}
+
+.searchable-select-empty:hover {
+  background: transparent;
+}

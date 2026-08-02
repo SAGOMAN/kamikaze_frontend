@@ -6,7 +6,7 @@ import {
   ViewEncapsulation,
   signal,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { FullCalendarComponent, FullCalendarModule } from '@fullcalendar/angular';
 import {
   CalendarOptions,
@@ -22,6 +22,9 @@ import { ApiService } from '../../core/api/api.service';
 import { ListQueryState } from '../../core/list-query';
 import { Branch, ClassSchedule, Instructor, PaginatedResponse } from '../../core/models';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
+import { FieldError } from '../../shared/forms/field-error';
+import { parseApiError } from '../../shared/forms/parse-api-error';
+import { showInvalid } from '../../shared/forms/show-invalid';
 import { ListPager } from '../../shared/list-pager/list-pager';
 import { Modal } from '../../shared/modal/modal';
 
@@ -38,7 +41,7 @@ export interface BranchCalendarPanel {
 
 @Component({
   selector: 'app-schedules',
-  imports: [FormsModule, Modal, ListPager, FullCalendarModule],
+  imports: [FormsModule, Modal, ListPager, FullCalendarModule, FieldError],
   templateUrl: './schedules.html',
   styleUrl: './schedules.css',
   encapsulation: ViewEncapsulation.None,
@@ -56,6 +59,9 @@ export class SchedulesPage implements OnInit {
   readonly formOpen = signal(false);
   readonly viewMode = signal<'list' | 'calendar'>('list');
   readonly list = new ListQueryState();
+  formError = '';
+  apiErrors: Record<string, string> = {};
+  readonly showInvalid = showInvalid;
 
   form: Partial<ClassSchedule> = {
     instructor_id: undefined,
@@ -156,6 +162,8 @@ export class SchedulesPage implements OnInit {
 
   edit(item: ClassSchedule) {
     this.editingId = item.id;
+    this.formError = '';
+    this.apiErrors = {};
     this.form = {
       ...item,
       start_time: String(item.start_time).slice(0, 5),
@@ -171,6 +179,8 @@ export class SchedulesPage implements OnInit {
 
   reset() {
     this.editingId = null;
+    this.formError = '';
+    this.apiErrors = {};
     this.form = {
       instructor_id: undefined,
       branch_id: undefined,
@@ -182,13 +192,25 @@ export class SchedulesPage implements OnInit {
     };
   }
 
-  save() {
+  save(f: NgForm) {
+    this.formError = '';
+    this.apiErrors = {};
+    if (f.invalid) {
+      return;
+    }
     const req = this.editingId
       ? this.api.put(`/class-schedules/${this.editingId}`, this.form)
       : this.api.post('/class-schedules', this.form);
-    req.subscribe(() => {
-      this.closeForm();
-      this.refreshAfterMutation();
+    req.subscribe({
+      next: () => {
+        this.closeForm();
+        this.refreshAfterMutation();
+      },
+      error: (err) => {
+        const parsed = parseApiError(err, 'No se pudo guardar el horario');
+        this.formError = parsed.message;
+        this.apiErrors = parsed.fieldErrors;
+      },
     });
   }
 

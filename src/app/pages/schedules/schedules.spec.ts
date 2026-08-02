@@ -287,7 +287,7 @@ describe('SchedulesPage', () => {
     api.post.and.returnValue(of({ id: 300 }));
     api.get.calls.reset();
 
-    component.save();
+    component.save({ invalid: false } as import('@angular/forms').NgForm);
 
     expect(api.post).toHaveBeenCalledWith('/class-schedules', payload);
     expect(component.formOpen()).toBeFalse();
@@ -308,7 +308,7 @@ describe('SchedulesPage', () => {
     component.form = { ...payload };
     api.put.and.returnValue(of({ id: 100 }));
 
-    component.save();
+    component.save({ invalid: false } as import('@angular/forms').NgForm);
 
     expect(api.put).toHaveBeenCalledWith('/class-schedules/100', payload);
   });

@@ -50,31 +50,79 @@
     [title]="editingId ? 'Editar alumno' : 'Inscribir alumno'"
     (closed)="closeForm()"
   >
-    <form id="student-form" class="form-grid" (ngSubmit)="save()">
+    <form #f="ngForm" id="student-form" class="form-grid" novalidate (ngSubmit)="save(f)">
       <label>
         Nombre
-        <input [(ngModel)]="form.first_name" name="first_name" required />
+        <input
+          [(ngModel)]="form.first_name"
+          name="first_name"
+          required
+          #firstName="ngModel"
+          [class.field-invalid]="showInvalid(f, firstName) || !!apiErrors['first_name']"
+        />
+        <app-field-error
+          [control]="firstName"
+          [submitted]="f.submitted"
+          [apiError]="apiErrors['first_name'] || ''"
+        />
       </label>
       <label>
         Apellidos
-        <input [(ngModel)]="form.last_name" name="last_name" required />
+        <input
+          [(ngModel)]="form.last_name"
+          name="last_name"
+          required
+          #lastName="ngModel"
+          [class.field-invalid]="showInvalid(f, lastName) || !!apiErrors['last_name']"
+        />
+        <app-field-error
+          [control]="lastName"
+          [submitted]="f.submitted"
+          [apiError]="apiErrors['last_name'] || ''"
+        />
       </label>
       <label>
         Apodo
-        <input [(ngModel)]="form.nickname" name="nickname" />
+        <input
+          [(ngModel)]="form.nickname"
+          name="nickname"
+          #nickname="ngModel"
+          [class.field-invalid]="showInvalid(f, nickname) || !!apiErrors['nickname']"
+        />
+        <app-field-error
+          [control]="nickname"
+          [submitted]="f.submitted"
+          [apiError]="apiErrors['nickname'] || ''"
+        />
       </label>
       <label>
         Teléfono
-        <input [(ngModel)]="form.phone" name="phone" />
+        <input
+          [(ngModel)]="form.phone"
+          name="phone"
+          #phone="ngModel"
+          [class.field-invalid]="showInvalid(f, phone) || !!apiErrors['phone']"
+        />
+        <app-field-error [control]="phone" [submitted]="f.submitted" [apiError]="apiErrors['phone'] || ''" />
       </label>
       <label>
         Correo
-        <input type="email" [(ngModel)]="form.email" name="email" />
+        <input
+          type="email"
+          [(ngModel)]="form.email"
+          name="email"
+          #email="ngModel"
+          [class.field-invalid]="showInvalid(f, email) || !!apiErrors['email']"
+        />
+        <app-field-error [control]="email" [submitted]="f.submitted" [apiError]="apiErrors['email'] || ''" />
       </label>
       <label class="checkbox">
         <input type="checkbox" [(ngModel)]="form.is_active" name="is_active" />
         Activo
       </label>
+      @if (formError) {
+        <p class="error full">{{ formError }}</p>
+      }
     </form>
     <div modalFooter class="actions modal-actions">
       <button class="btn ghost" type="button" (click)="closeForm()">Cancelar</button>

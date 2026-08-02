@@ -103,6 +103,52 @@ export interface Expense {
   branch?: Branch;
 }
 
+export interface MonthlyReportTopStudent {
+  id: number;
+  first_name: string;
+  last_name: string;
+  full_name: string;
+}
+
+export interface MonthlyReportTopSale {
+  id: number;
+  sale_date: string;
+  total: number;
+  notes?: string | null;
+  branch?: { id: number; name: string } | null;
+}
+
+export interface MonthlyReportTopExpense {
+  id: number;
+  category: string;
+  description?: string | null;
+  amount: number;
+  expense_date: string;
+  branch?: { id: number; name: string } | null;
+}
+
+export interface MonthlyReportTopMembershipPayment {
+  id: number;
+  amount: number;
+  payment_date: string;
+  period_month: string;
+  payment_method?: string | null;
+  student?: MonthlyReportTopStudent | null;
+}
+
+export interface MonthlyReportTopAttendance {
+  student_id: number;
+  total: number;
+  student?: MonthlyReportTopStudent | null;
+}
+
+export interface MonthlyReportTops {
+  sales: MonthlyReportTopSale[];
+  expenses: MonthlyReportTopExpense[];
+  membership_payments: MonthlyReportTopMembershipPayment[];
+  attendances_by_student: MonthlyReportTopAttendance[];
+}
+
 export interface MonthlyReport {
   year: number;
   month: number;
@@ -115,6 +161,41 @@ export interface MonthlyReport {
   };
   expenses: { total: number };
   balance: number;
+  tops: MonthlyReportTops;
+}
+
+export type ReportPeriodType = 'month' | 'quarter' | 'semester' | 'year';
+
+export interface PeriodReportMonth {
+  year: number;
+  month: number;
+  income: {
+    membership_payments: number;
+    sales: number;
+    total: number;
+  };
+  expenses: { total: number };
+  balance: number;
+}
+
+export interface PeriodReport {
+  period: ReportPeriodType;
+  year: number;
+  month?: number | null;
+  quarter?: number | null;
+  semester?: number | null;
+  from: string;
+  to: string;
+  label: string;
+  income: {
+    membership_payments: number;
+    sales: number;
+    total: number;
+  };
+  expenses: { total: number };
+  balance: number;
+  months: PeriodReportMonth[];
+  tops: MonthlyReportTops | null;
 }
 
 export interface Instructor {

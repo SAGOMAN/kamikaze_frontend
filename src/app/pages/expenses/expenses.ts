@@ -1,16 +1,19 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
 import { ListQueryState } from '../../core/list-query';
 import { Branch, Expense, PaginatedResponse } from '../../core/models';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
 import { TimestampPipe } from '../../shared/date/timestamp.pipe';
+import { FieldError } from '../../shared/forms/field-error';
+import { parseApiError } from '../../shared/forms/parse-api-error';
+import { showInvalid } from '../../shared/forms/show-invalid';
 import { ListPager } from '../../shared/list-pager/list-pager';
 import { Modal } from '../../shared/modal/modal';
 
 @Component({
   selector: 'app-expenses',
-  imports: [FormsModule, Modal, TimestampPipe, ListPager],
+  imports: [FormsModule, Modal, TimestampPipe, ListPager, FieldError],
   templateUrl: './expenses.html',
 })
 export class ExpensesPage implements OnInit {
@@ -27,6 +30,9 @@ export class ExpensesPage implements OnInit {
     notes: '',
   };
   editingId: number | null = null;
+  formError = '';
+  apiErrors: Record<string, string> = {};
+  readonly showInvalid = showInvalid;
 
   constructor(
     private readonly api: ApiService,
@@ -59,6 +65,8 @@ export class ExpensesPage implements OnInit {
 
   edit(item: Expense) {
     this.editingId = item.id;
+    this.formError = '';
+    this.apiErrors = {};
     this.form = {
       ...item,
       expense_date: String(item.expense_date).slice(0, 10),
@@ -73,6 +81,8 @@ export class ExpensesPage implements OnInit {
 
   reset() {
     this.editingId = null;
+    this.formError = '';
+    this.apiErrors = {};
     this.form = {
       category: '',
       description: '',
@@ -83,13 +93,25 @@ export class ExpensesPage implements OnInit {
     };
   }
 
-  save() {
+  save(f: NgForm) {
+    this.formError = '';
+    this.apiErrors = {};
+    if (f.invalid) {
+      return;
+    }
     const req = this.editingId
       ? this.api.put(`/expenses/${this.editingId}`, this.form)
       : this.api.post('/expenses', this.form);
-    req.subscribe(() => {
-      this.closeForm();
-      this.reload();
+    req.subscribe({
+      next: () => {
+        this.closeForm();
+        this.reload();
+      },
+      error: (err) => {
+        const parsed = parseApiError(err, 'No se pudo guardar el gasto');
+        this.formError = parsed.message;
+        this.apiErrors = parsed.fieldErrors;
+      },
     });
   }
 

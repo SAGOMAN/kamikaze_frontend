@@ -1,19 +1,53 @@
 <section class="page">
   <header class="page-header">
     <div>
-      <h1>Resumen mensual</h1>
-      <p>Ingresos vs egresos del período.</p>
+      <h1>Resumen</h1>
+      <p>Ingresos vs egresos por período.</p>
     </div>
     <div class="filters">
       <label>
-        Año
-        <input type="number" [(ngModel)]="year" />
+        Período
+        <select [(ngModel)]="period" name="period">
+          <option value="month">Mes</option>
+          <option value="quarter">Trimestre</option>
+          <option value="semester">Semestre</option>
+          <option value="year">Año</option>
+        </select>
       </label>
       <label>
-        Mes
-        <input type="number" min="1" max="12" [(ngModel)]="month" />
+        Año
+        <input type="number" [(ngModel)]="year" name="year" />
       </label>
+      @if (period === 'month') {
+        <label>
+          Mes
+          <input type="number" min="1" max="12" [(ngModel)]="month" name="month" />
+        </label>
+      }
+      @if (period === 'quarter') {
+        <label>
+          Trimestre
+          <select [(ngModel)]="quarter" name="quarter">
+            <option [ngValue]="1">Q1 (Ene–Mar)</option>
+            <option [ngValue]="2">Q2 (Abr–Jun)</option>
+            <option [ngValue]="3">Q3 (Jul–Sep)</option>
+            <option [ngValue]="4">Q4 (Oct–Dic)</option>
+          </select>
+        </label>
+      }
+      @if (period === 'semester') {
+        <label>
+          Semestre
+          <select [(ngModel)]="semester" name="semester">
+            <option [ngValue]="1">S1 (Ene–Jun)</option>
+            <option [ngValue]="2">S2 (Jul–Dic)</option>
+          </select>
+        </label>
+      }
       <button type="button" class="btn" (click)="load()">Actualizar</button>
+      <button type="button" class="btn ghost" (click)="exportExcel()" [disabled]="exporting()">
+        {{ exporting() ? 'Exportando…' : 'Exportar Excel' }}
+      </button>
     </div>
   </header>
 
@@ -22,6 +56,8 @@
   }
 
   @if (report(); as r) {
+    <p class="period-label muted">{{ r.label }} · {{ r.from }} — {{ r.to }}</p>
+
     <div class="stats">
       <article>
         <h2>Mensualidades</h2>
@@ -44,5 +80,136 @@
         <p>{{ money(r.balance) }}</p>
       </article>
     </div>
+
+    <section class="breakdown" aria-label="Desglose por mes">
+      <header class="breakdown-header">
+        <h2 class="section-title">Desglose por mes</h2>
+        <p class="muted">Detalle del período seleccionado.</p>
+      </header>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Mes</th>
+              <th>Mensualidades</th>
+              <th>Ventas</th>
+              <th>Ingresos</th>
+              <th>Gastos</th>
+              <th>Balance</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of r.months; track m.year + '-' + m.month) {
+              <tr>
+                <td>{{ monthLabel(m.year, m.month) }}</td>
+                <td>{{ money(m.income.membership_payments) }}</td>
+                <td>{{ money(m.income.sales) }}</td>
+                <td>{{ money(m.income.total) }}</td>
+                <td>{{ money(m.expenses.total) }}</td>
+                <td>{{ money(m.balance) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    @if (r.tops; as tops) {
+      <section class="tops" aria-label="Tops del mes">
+        <header class="tops-header">
+          <h2 class="section-title">Tops 5 del mes</h2>
+          <p class="muted">Ranking del mes seleccionado.</p>
+        </header>
+
+        <div class="tops-grid">
+          <article class="top-card">
+            <h3>Ventas realizadas</h3>
+            @if (tops.sales.length) {
+              <ol class="top-list">
+                @for (item of tops.sales; track item.id; let i = $index) {
+                  <li>
+                    <span class="top-rank">{{ i + 1 }}</span>
+                    <div class="top-body">
+                      <strong>{{ item.branch?.name || 'Sin sucursal' }}</strong>
+                      <span class="muted">{{ item.sale_date | timestamp }}</span>
+                    </div>
+                    <span class="top-value">{{ money(item.total) }}</span>
+                  </li>
+                }
+              </ol>
+            } @else {
+              <p class="muted top-empty">Sin ventas en el período.</p>
+            }
+          </article>
+
+          <article class="top-card">
+            <h3>Gastos realizados</h3>
+            @if (tops.expenses.length) {
+              <ol class="top-list">
+                @for (item of tops.expenses; track item.id; let i = $index) {
+                  <li>
+                    <span class="top-rank">{{ i + 1 }}</span>
+                    <div class="top-body">
+                      <strong>{{ item.category }}</strong>
+                      <span class="muted">
+                        {{ item.expense_date | timestamp }}
+                        @if (item.description) {
+                          · {{ item.description }}
+                        }
+                      </span>
+                    </div>
+                    <span class="top-value">{{ money(item.amount) }}</span>
+                  </li>
+                }
+              </ol>
+            } @else {
+              <p class="muted top-empty">Sin gastos en el período.</p>
+            }
+          </article>
+
+          <article class="top-card">
+            <h3>Pago de mensualidades</h3>
+            @if (tops.membership_payments.length) {
+              <ol class="top-list">
+                @for (item of tops.membership_payments; track item.id; let i = $index) {
+                  <li>
+                    <span class="top-rank">{{ i + 1 }}</span>
+                    <div class="top-body">
+                      <strong>{{ item.student?.full_name || 'Alumno' }}</strong>
+                      <span class="muted">
+                        {{ item.payment_date | timestamp }} · período {{ item.period_month }}
+                      </span>
+                    </div>
+                    <span class="top-value">{{ money(item.amount) }}</span>
+                  </li>
+                }
+              </ol>
+            } @else {
+              <p class="muted top-empty">Sin pagos en el período.</p>
+            }
+          </article>
+
+          <article class="top-card">
+            <h3>Asistencias por alumno</h3>
+            @if (tops.attendances_by_student.length) {
+              <ol class="top-list">
+                @for (item of tops.attendances_by_student; track item.student_id; let i = $index) {
+                  <li>
+                    <span class="top-rank">{{ i + 1 }}</span>
+                    <div class="top-body">
+                      <strong>{{ item.student?.full_name || 'Alumno' }}</strong>
+                      <span class="muted">Total del mes</span>
+                    </div>
+                    <span class="top-value">{{ item.total }}</span>
+                  </li>
+                }
+              </ol>
+            } @else {
+              <p class="muted top-empty">Sin asistencias en el período.</p>
+            }
+          </article>
+        </div>
+      </section>
+    }
   }
 </section>

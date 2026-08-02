@@ -52,36 +52,102 @@
     [title]="editingId ? 'Editar gasto' : 'Registrar gasto'"
     (closed)="closeForm()"
   >
-    <form id="expense-form" class="form-grid" (ngSubmit)="save()">
+    <form #f="ngForm" id="expense-form" class="form-grid" novalidate (ngSubmit)="save(f)">
       <label>
         Categoría
-        <input [(ngModel)]="form.category" name="category" required />
+        <input
+          [(ngModel)]="form.category"
+          name="category"
+          required
+          #categoryCtrl="ngModel"
+          [class.field-invalid]="showInvalid(f, categoryCtrl) || !!apiErrors['category']"
+        />
+        <app-field-error
+          [control]="categoryCtrl"
+          [submitted]="f.submitted"
+          [apiError]="apiErrors['category'] || ''"
+        />
       </label>
       <label>
         Descripción
-        <input [(ngModel)]="form.description" name="description" />
+        <input
+          [(ngModel)]="form.description"
+          name="description"
+          #descriptionCtrl="ngModel"
+          [class.field-invalid]="showInvalid(f, descriptionCtrl) || !!apiErrors['description']"
+        />
+        <app-field-error
+          [control]="descriptionCtrl"
+          [submitted]="f.submitted"
+          [apiError]="apiErrors['description'] || ''"
+        />
       </label>
       <label>
         Monto
-        <input type="number" step="0.01" [(ngModel)]="form.amount" name="amount" required />
+        <input
+          type="number"
+          step="0.01"
+          [(ngModel)]="form.amount"
+          name="amount"
+          required
+          #amountCtrl="ngModel"
+          [class.field-invalid]="showInvalid(f, amountCtrl) || !!apiErrors['amount']"
+        />
+        <app-field-error
+          [control]="amountCtrl"
+          [submitted]="f.submitted"
+          [apiError]="apiErrors['amount'] || ''"
+        />
       </label>
       <label>
         Fecha
-        <input type="date" [(ngModel)]="form.expense_date" name="expense_date" required />
+        <input
+          type="date"
+          [(ngModel)]="form.expense_date"
+          name="expense_date"
+          required
+          #expenseDateCtrl="ngModel"
+          [class.field-invalid]="showInvalid(f, expenseDateCtrl) || !!apiErrors['expense_date']"
+        />
+        <app-field-error
+          [control]="expenseDateCtrl"
+          [submitted]="f.submitted"
+          [apiError]="apiErrors['expense_date'] || ''"
+        />
       </label>
       <label>
         Sucursal (opcional)
-        <select [(ngModel)]="form.branch_id" name="branch_id">
+        <select
+          [(ngModel)]="form.branch_id"
+          name="branch_id"
+          #branchCtrl="ngModel"
+          [class.field-invalid]="showInvalid(f, branchCtrl) || !!apiErrors['branch_id']"
+        >
           <option [ngValue]="null">General</option>
           @for (b of branches(); track b.id) {
             <option [ngValue]="b.id">{{ b.name }}</option>
           }
         </select>
+        <app-field-error
+          [control]="branchCtrl"
+          [submitted]="f.submitted"
+          [apiError]="apiErrors['branch_id'] || ''"
+        />
       </label>
       <label class="full">
         Notas
-        <textarea [(ngModel)]="form.notes" name="notes" rows="2"></textarea>
+        <textarea
+          [(ngModel)]="form.notes"
+          name="notes"
+          rows="2"
+          #notesCtrl="ngModel"
+          [class.field-invalid]="showInvalid(f, notesCtrl) || !!apiErrors['notes']"
+        ></textarea>
+        <app-field-error [control]="notesCtrl" [submitted]="f.submitted" [apiError]="apiErrors['notes'] || ''" />
       </label>
+      @if (formError) {
+        <p class="error full">{{ formError }}</p>
+      }
     </form>
     <div modalFooter class="actions modal-actions">
       <button class="btn ghost" type="button" (click)="closeForm()">Cancelar</button>

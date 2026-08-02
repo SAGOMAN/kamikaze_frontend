@@ -20,6 +20,22 @@ export class ApiService {
     return this.http.get<T>(`${this.base}${path}`, { params });
   }
 
+  getBlob(path: string, query?: Record<string, string | number | boolean | null | undefined>) {
+    let params = new HttpParams();
+    if (query) {
+      Object.entries(query).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && value !== '') {
+          params = params.set(key, String(value));
+        }
+      });
+    }
+    return this.http.get(`${this.base}${path}`, {
+      params,
+      responseType: 'blob',
+      observe: 'response',
+    });
+  }
+
   post<T>(path: string, body: unknown) {
     return this.http.post<T>(`${this.base}${path}`, body);
   }

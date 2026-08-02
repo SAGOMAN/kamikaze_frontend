@@ -1,12 +1,21 @@
 <div class="login-page">
-  <form class="login-card" (ngSubmit)="submit()">
+  <form #f="ngForm" class="login-card" novalidate (ngSubmit)="submit(f)">
     <p class="eyebrow">Hanuman Style</p>
     <h1>Acceso admin</h1>
     <p class="lead">Gestiona sucursales, alumnos, asistencia y finanzas.</p>
 
     <label>
       Correo
-      <input type="email" name="email" [(ngModel)]="email" required autocomplete="username" />
+      <input
+        type="email"
+        name="email"
+        [(ngModel)]="email"
+        required
+        autocomplete="username"
+        #emailCtrl="ngModel"
+        [class.field-invalid]="showInvalid(f, emailCtrl) || !!apiErrors['email']"
+      />
+      <app-field-error [control]="emailCtrl" [submitted]="f.submitted" [apiError]="apiErrors['email'] || ''" />
     </label>
     <label>
       Contraseña
@@ -16,6 +25,13 @@
         [(ngModel)]="password"
         required
         autocomplete="current-password"
+        #passwordCtrl="ngModel"
+        [class.field-invalid]="showInvalid(f, passwordCtrl) || !!apiErrors['password']"
+      />
+      <app-field-error
+        [control]="passwordCtrl"
+        [submitted]="f.submitted"
+        [apiError]="apiErrors['password'] || ''"
       />
     </label>
 

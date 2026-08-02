@@ -2,94 +2,280 @@
   <header class="page-header">
     <div>
       <h1>Mensualidades</h1>
-      <p>Registro de pagos con notas opcionales.</p>
-    </div>
-    <div class="filters">
-      <input
-        type="search"
-        placeholder="Buscar alumno, período…"
-        [(ngModel)]="list.search"
-        name="search"
-        (keyup.enter)="searchNow()"
-      />
-      <button type="button" class="btn ghost" (click)="searchNow()">Buscar</button>
-      <button type="button" class="btn" (click)="openCreate()">Registrar pago</button>
+      <p>Cobro por alumno con vista anual, e historial global de pagos.</p>
     </div>
   </header>
 
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Alumno</th>
-          <th>Período</th>
-          <th>Monto</th>
-          <th>Fecha</th>
-          <th>Notas</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (item of items(); track item.id) {
-          <tr>
-            <td>
-              {{
-                item.student
-                  ? item.student.nickname || item.student.first_name + ' ' + item.student.last_name
-                  : item.student_id
-              }}
-            </td>
-            <td>{{ item.period_month }}</td>
-            <td>{{ item.amount }}</td>
-            <td>{{ item.payment_date | timestamp }}</td>
-            <td>{{ item.notes || '—' }}</td>
-            <td class="row-actions">
-              <button type="button" class="btn ghost" (click)="edit(item)">Editar</button>
-              <button type="button" class="btn danger" (click)="remove(item.id)">Eliminar</button>
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </div>
+  <section class="panel payments-year-panel">
+    <div class="payments-year-toolbar">
+      <h2 class="section-title">Cobro por alumno</h2>
+      <div class="filters">
+        <label class="student-picker">
+          Alumno
+          <app-searchable-select
+            [ngModel]="selectedStudentId()"
+            (ngModelChange)="onStudentChange($event)"
+            name="selected_student"
+            [options]="studentOptions()"
+            placeholder="Escribe para buscar alumno…"
+          />
+        </label>
+        <label>
+          Año
+          <select
+            [ngModel]="selectedYear()"
+            (ngModelChange)="onYearChange($event)"
+            name="selected_year"
+          >
+            @for (y of yearOptions; track y) {
+              <option [ngValue]="y">{{ y }}</option>
+            }
+          </select>
+        </label>
+      </div>
+    </div>
 
-  <app-list-pager [meta]="list.meta()" (pageChange)="goToPage($event)" />
+    @if (!selectedStudentId()) {
+      <p class="muted">Selecciona un alumno para ver su franja anual.</p>
+    } @else {
+      <div class="payments-gantt" [class.is-loading]="yearLoading()" aria-label="Meses del año">
+        @for (cell of monthCells(); track cell.period) {
+          <button
+            type="button"
+            class="payments-gantt-month"
+            [class.is-paid]="cell.paid"
+            [class.is-selected]="selectedPeriod() === cell.period"
+            (click)="selectMonth(cell.period)"
+            [title]="
+              cell.paid
+                ? cell.count + ' pago(s) · ' + formatMoney(cell.total)
+                : 'Sin pagos registrados'
+            "
+          >
+            <span class="payments-gantt-label">{{ cell.label }}</span>
+            <span class="payments-gantt-status">{{ cell.paid ? 'Pagado' : 'Pendiente' }}</span>
+            @if (cell.paid) {
+              <span class="payments-gantt-amount">{{ formatMoney(cell.total) }}</span>
+            }
+          </button>
+        }
+      </div>
+
+      @if (selectedPeriod(); as period) {
+        <div class="payments-month-panel">
+          <div class="payments-month-header">
+            <div>
+              <h3>{{ monthTitle(period) }}</h3>
+              <p class="muted">
+                @if (selectedMonthPayments().length) {
+                  {{ selectedMonthPayments().length }} pago(s) · total
+                  {{ formatMoney(selectedMonthTotal()) }}
+                } @else {
+                  Sin pagos en este período
+                }
+              </p>
+            </div>
+            <button type="button" class="btn" (click)="openCreateFromMonth()">Registrar pago</button>
+          </div>
+
+          @if (selectedMonthPayments().length) {
+            <div class="table-wrap payments-month-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Monto</th>
+                    <th>Fecha</th>
+                    <th>Método</th>
+                    <th>Notas</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of selectedMonthPayments(); track item.id) {
+                    <tr>
+                      <td>{{ formatMoney(+item.amount) }}</td>
+                      <td>{{ item.payment_date | timestamp }}</td>
+                      <td>{{ item.payment_method || '—' }}</td>
+                      <td>{{ item.notes || '—' }}</td>
+                      <td class="row-actions">
+                        <button type="button" class="btn ghost" (click)="edit(item)">Editar</button>
+                        <button type="button" class="btn danger" (click)="remove(item.id)">
+                          Eliminar
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      }
+    }
+  </section>
+
+  <section class="payments-history">
+    <header class="page-header">
+      <div>
+        <h2 class="section-title">Historial global</h2>
+        <p class="muted">Todos los pagos registrados, con búsqueda y paginación.</p>
+      </div>
+      <div class="filters">
+        <input
+          type="search"
+          placeholder="Buscar alumno, período…"
+          [(ngModel)]="list.search"
+          name="search"
+          (keyup.enter)="searchNow()"
+        />
+        <button type="button" class="btn ghost" (click)="searchNow()">Buscar</button>
+        <button type="button" class="btn" (click)="openCreate()">Registrar pago</button>
+      </div>
+    </header>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Alumno</th>
+            <th>Período</th>
+            <th>Monto</th>
+            <th>Fecha</th>
+            <th>Notas</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items(); track item.id) {
+            <tr>
+              <td>
+                {{
+                  item.student
+                    ? item.student.nickname || item.student.first_name + ' ' + item.student.last_name
+                    : item.student_id
+                }}
+              </td>
+              <td>{{ item.period_month }}</td>
+              <td>{{ item.amount }}</td>
+              <td>{{ item.payment_date | timestamp }}</td>
+              <td>{{ item.notes || '—' }}</td>
+              <td class="row-actions">
+                <button type="button" class="btn ghost" (click)="edit(item)">Editar</button>
+                <button type="button" class="btn danger" (click)="remove(item.id)">Eliminar</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-list-pager [meta]="list.meta()" (pageChange)="goToPage($event)" />
+  </section>
 
   <app-modal
     [open]="formOpen()"
     [title]="editingId ? 'Editar pago' : 'Registrar pago'"
     (closed)="closeForm()"
   >
-    <form id="payment-form" class="form-grid" (ngSubmit)="save()">
+    <form #f="ngForm" id="payment-form" class="form-grid" novalidate (ngSubmit)="save(f)">
       <label>
         Alumno
-        <select [(ngModel)]="form.student_id" name="student_id" required>
-          <option [ngValue]="undefined" disabled>Selecciona</option>
-          @for (s of students(); track s.id) {
-            <option [ngValue]="s.id">{{ studentLabel(s) }}</option>
-          }
-        </select>
+        <app-searchable-select
+          [(ngModel)]="form.student_id"
+          name="student_id"
+          required
+          #studentCtrl="ngModel"
+          [options]="studentOptions()"
+          [locked]="periodLocked"
+          placeholder="Escribe para buscar alumno…"
+          [invalid]="showInvalid(f, studentCtrl) || !!apiErrors['student_id']"
+        />
+        <app-field-error
+          [control]="studentCtrl"
+          [submitted]="f.submitted"
+          [apiError]="apiErrors['student_id'] || ''"
+        />
       </label>
       <label>
         Monto
-        <input type="number" step="0.01" [(ngModel)]="form.amount" name="amount" required />
+        <input
+          type="number"
+          step="0.01"
+          [(ngModel)]="form.amount"
+          name="amount"
+          required
+          #amountCtrl="ngModel"
+          [class.field-invalid]="showInvalid(f, amountCtrl) || !!apiErrors['amount']"
+        />
+        <app-field-error
+          [control]="amountCtrl"
+          [submitted]="f.submitted"
+          [apiError]="apiErrors['amount'] || ''"
+        />
       </label>
       <label>
         Fecha pago
-        <input type="date" [(ngModel)]="form.payment_date" name="payment_date" required />
+        <input
+          type="date"
+          [(ngModel)]="form.payment_date"
+          name="payment_date"
+          required
+          #paymentDateCtrl="ngModel"
+          [class.field-invalid]="showInvalid(f, paymentDateCtrl) || !!apiErrors['payment_date']"
+        />
+        <app-field-error
+          [control]="paymentDateCtrl"
+          [submitted]="f.submitted"
+          [apiError]="apiErrors['payment_date'] || ''"
+        />
       </label>
       <label>
         Período (YYYY-MM)
-        <input [(ngModel)]="form.period_month" name="period_month" placeholder="2026-07" required />
+        <input
+          [(ngModel)]="form.period_month"
+          name="period_month"
+          placeholder="2026-07"
+          required
+          pattern="^\d{4}-\d{2}$"
+          #periodCtrl="ngModel"
+          [readonly]="periodLocked"
+          [class.field-invalid]="showInvalid(f, periodCtrl) || !!apiErrors['period_month']"
+        />
+        <app-field-error
+          [control]="periodCtrl"
+          [submitted]="f.submitted"
+          [apiError]="apiErrors['period_month'] || ''"
+          patternMessage="Usa formato YYYY-MM."
+        />
       </label>
       <label>
         Método
-        <input [(ngModel)]="form.payment_method" name="payment_method" />
+        <input
+          [(ngModel)]="form.payment_method"
+          name="payment_method"
+          #methodCtrl="ngModel"
+          [class.field-invalid]="showInvalid(f, methodCtrl) || !!apiErrors['payment_method']"
+        />
+        <app-field-error
+          [control]="methodCtrl"
+          [submitted]="f.submitted"
+          [apiError]="apiErrors['payment_method'] || ''"
+        />
       </label>
       <label class="full">
         Notas
-        <textarea [(ngModel)]="form.notes" name="notes" rows="2"></textarea>
+        <textarea
+          [(ngModel)]="form.notes"
+          name="notes"
+          rows="2"
+          #notesCtrl="ngModel"
+          [class.field-invalid]="showInvalid(f, notesCtrl) || !!apiErrors['notes']"
+        ></textarea>
+        <app-field-error [control]="notesCtrl" [submitted]="f.submitted" [apiError]="apiErrors['notes'] || ''" />
       </label>
+      @if (formError) {
+        <p class="error full">{{ formError }}</p>
+      }
     </form>
     <div modalFooter class="actions modal-actions">
       <button class="btn ghost" type="button" (click)="closeForm()">Cancelar</button>

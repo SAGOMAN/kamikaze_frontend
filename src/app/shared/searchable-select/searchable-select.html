@@ -1,0 +1,52 @@
+<div
+  class="searchable-select"
+  [class.is-open]="open()"
+  [class.is-disabled]="disabled()"
+  [class.is-invalid]="invalid()"
+>
+  <div class="searchable-select-control">
+    <input
+      #queryInput
+      type="text"
+      role="combobox"
+      [attr.aria-expanded]="open()"
+      aria-autocomplete="list"
+      aria-haspopup="listbox"
+      [attr.aria-controls]="open() ? listId : null"
+      [placeholder]="placeholder()"
+      [disabled]="disabled()"
+      (input)="onInput($event)"
+      (focus)="onFocus()"
+      (keydown)="onKeydown($event)"
+      autocomplete="off"
+    />
+    <button
+      type="button"
+      class="searchable-select-toggle"
+      tabindex="-1"
+      [disabled]="disabled()"
+      [attr.aria-label]="open() ? 'Cerrar lista' : 'Abrir lista'"
+      (click)="toggle()"
+    >
+      ▾
+    </button>
+  </div>
+
+  @if (open()) {
+    <ul [id]="listId" class="searchable-select-list" role="listbox">
+      @for (option of filtered(); track option.value; let i = $index) {
+        <li
+          role="option"
+          [attr.aria-selected]="option.value === value()"
+          [class.is-active]="i === activeIndex()"
+          [class.is-selected]="option.value === value()"
+          (mousedown)="selectOption(option, $event)"
+        >
+          {{ option.label }}
+        </li>
+      } @empty {
+        <li class="searchable-select-empty" role="presentation">{{ emptyLabel() }}</li>
+      }
+    </ul>
+  }
+</div>

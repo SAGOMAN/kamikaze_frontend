@@ -47,23 +47,52 @@
   <app-list-pager [meta]="list.meta()" (pageChange)="goToPage($event)" />
 
   <app-modal [open]="formOpen()" title="Registrar venta" (closed)="closeForm()">
-    <form id="sale-form" (ngSubmit)="save()">
+    <form #f="ngForm" id="sale-form" novalidate (ngSubmit)="save(f)">
       <div class="form-grid">
         <label>
           Sucursal
-          <select [(ngModel)]="branchId" name="branch_id" required>
+          <select
+            [(ngModel)]="branchId"
+            name="branch_id"
+            required
+            #branchCtrl="ngModel"
+            [class.field-invalid]="showInvalid(f, branchCtrl) || !!apiErrors['branch_id']"
+          >
             @for (b of branches(); track b.id) {
               <option [ngValue]="b.id">{{ b.name }}</option>
             }
           </select>
+          <app-field-error
+            [control]="branchCtrl"
+            [submitted]="f.submitted"
+            [apiError]="apiErrors['branch_id'] || ''"
+          />
         </label>
         <label>
           Fecha
-          <input type="date" [(ngModel)]="saleDate" name="sale_date" required />
+          <input
+            type="date"
+            [(ngModel)]="saleDate"
+            name="sale_date"
+            required
+            #dateCtrl="ngModel"
+            [class.field-invalid]="showInvalid(f, dateCtrl) || !!apiErrors['sale_date']"
+          />
+          <app-field-error
+            [control]="dateCtrl"
+            [submitted]="f.submitted"
+            [apiError]="apiErrors['sale_date'] || ''"
+          />
         </label>
         <label class="full">
           Notas
-          <input [(ngModel)]="notes" name="notes" />
+          <input
+            [(ngModel)]="notes"
+            name="notes"
+            #notesCtrl="ngModel"
+            [class.field-invalid]="showInvalid(f, notesCtrl) || !!apiErrors['notes']"
+          />
+          <app-field-error [control]="notesCtrl" [submitted]="f.submitted" [apiError]="apiErrors['notes'] || ''" />
         </label>
       </div>
 
@@ -79,16 +108,34 @@
               <span class="sale-item-index" aria-hidden="true">{{ i + 1 }}</span>
               <label class="sale-item-product">
                 Producto
-                <select [(ngModel)]="item.product_id" [name]="'product_' + i" required>
+                <select
+                  [(ngModel)]="item.product_id"
+                  [name]="'product_' + i"
+                  required
+                  #productCtrl="ngModel"
+                  [class.field-invalid]="showInvalid(f, productCtrl)"
+                >
                   <option [ngValue]="null" disabled>Selecciona</option>
                   @for (p of products(); track p.id) {
-                    <option [ngValue]="p.id">{{ p.name }} — {{ p.unit_price }}</option>
+                    <option [ngValue]="p.id">
+                      {{ p.name }} — {{ p.unit_price }} — Stock: {{ stockFor(p) }}
+                    </option>
                   }
                 </select>
+                <app-field-error [control]="productCtrl" [submitted]="f.submitted" />
               </label>
               <label class="sale-item-qty">
                 Cantidad
-                <input type="number" min="1" [(ngModel)]="item.quantity" [name]="'qty_' + i" required />
+                <input
+                  type="number"
+                  min="1"
+                  [(ngModel)]="item.quantity"
+                  [name]="'qty_' + i"
+                  required
+                  #qtyCtrl="ngModel"
+                  [class.field-invalid]="showInvalid(f, qtyCtrl)"
+                />
+                <app-field-error [control]="qtyCtrl" [submitted]="f.submitted" />
               </label>
               <button
                 type="button"
