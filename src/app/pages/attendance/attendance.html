@@ -2,26 +2,33 @@
   <header class="page-header">
     <div>
       <h1>Asistencia</h1>
-      <p>Elige el día en el calendario y marca asistencia por sucursal y horario.</p>
+      <p>Solo el día de hoy y el horario de clase en curso. Un alumno no puede estar presente en dos sucursales a la vez.</p>
     </div>
     <div class="filters">
-      <label>
+      <label class="branch-field">
         Sucursal
-        <select [(ngModel)]="branchId" name="branchId" (ngModelChange)="onBranchChange()">
-          @for (b of branches(); track b.id) {
-            <option [ngValue]="b.id">{{ b.name }}</option>
-          }
-        </select>
+        <span class="branch-select-wrap">
+          <span
+            class="color-swatch"
+            [style.background]="selectedBranchColor()"
+            [title]="selectedBranchColor()"
+          ></span>
+          <select [(ngModel)]="branchId" name="branchId" (ngModelChange)="onBranchChange()">
+            @for (b of branches(); track b.id) {
+              <option [ngValue]="b.id" [style.color]="b.color">{{ b.name }}</option>
+            }
+          </select>
+        </span>
       </label>
     </div>
   </header>
 
   <div class="attendance-layout">
-    <aside class="panel attendance-calendar">
+    <aside class="panel attendance-calendar" [style.--branch-color]="selectedBranchColor()">
       <full-calendar #calendar [options]="calendarOptions"></full-calendar>
       <p class="calendar-legend">
         <span class="legend-dot"></span>
-        Días con horario en la sucursal
+        Solo el día de hoy está disponible para marcar asistencia
       </p>
     </aside>
 
@@ -32,12 +39,12 @@
           <p>{{ presentCount() }} presente{{ presentCount() === 1 ? '' : 's' }} en este horario</p>
         </div>
         <label class="schedule-field">
-          Horario
+          Horario en curso
           <select
             [(ngModel)]="scheduleId"
             name="scheduleId"
             (ngModelChange)="reload()"
-            [disabled]="!schedules().length"
+            [disabled]="schedules().length <= 1"
           >
             @for (s of schedules(); track s.id) {
               <option [ngValue]="s.id">{{ scheduleLabel(s) }}</option>
@@ -52,7 +59,7 @@
 
       @if (!schedules().length) {
         <div class="panel attendance-empty">
-          <p>No hay horarios activos para esta sucursal en el día seleccionado.</p>
+          <p>No hay un horario de clase en curso para esta sucursal.</p>
         </div>
       } @else {
         <div class="filters" style="margin-bottom: 0.75rem">
@@ -78,14 +85,27 @@
                 <tr>
                   <td>{{ label(s) }}</td>
                   <td>
-                    <button
-                      type="button"
-                      class="btn"
-                      [class.ghost]="!isPresent(s.id)"
-                      (click)="toggle(s)"
-                    >
-                      {{ isPresent(s.id) ? 'Presente' : 'Marcar' }}
-                    </button>
+                    @if (isPresent(s.id)) {
+                      <button
+                        type="button"
+                        class="btn"
+                        (click)="toggle(s)"
+                      >
+                        Presente
+                      </button>
+                    } @else if (elsewhereAttendance(s.id); as other) {
+                      <span class="attendance-elsewhere">
+                        Presente en {{ other.branch?.name || 'otra sucursal' }}
+                      </span>
+                    } @else {
+                      <button
+                        type="button"
+                        class="btn ghost"
+                        (click)="toggle(s)"
+                      >
+                        Marcar
+                      </button>
+                    }
                   </td>
                 </tr>
               }

@@ -89,10 +89,37 @@
   margin-bottom: 0.85rem;
 }
 
+.branch-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.branch-select-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.branch-select-wrap .color-swatch {
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 6px;
+}
+
+.branch-select-wrap select {
+  flex: 1;
+  min-width: 12rem;
+}
+
 .attendance-calendar .fc .fc-toolbar-title {
   font-size: 1.1rem;
   font-family: Georgia, 'Times New Roman', serif;
   text-transform: capitalize;
+  color: var(--text);
+  background: var(--branch-color, var(--surface-muted));
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
 }
 
 .attendance-calendar .fc .fc-button {
@@ -119,6 +146,11 @@
   padding: 0.45rem;
 }
 
+.attendance-elsewhere {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
 .attendance-calendar .fc .fc-daygrid-day {
   cursor: pointer;
   transition: background-color 0.15s ease;
@@ -126,6 +158,17 @@
 
 .attendance-calendar .fc .fc-daygrid-day:hover {
   background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.attendance-calendar .fc .fc-day-disabled,
+.attendance-calendar .fc .is-unavailable-day {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.attendance-calendar .fc .fc-day-disabled:hover,
+.attendance-calendar .fc .is-unavailable-day:hover {
+  background: transparent;
 }
 
 .attendance-calendar .fc .fc-daygrid-day-frame {

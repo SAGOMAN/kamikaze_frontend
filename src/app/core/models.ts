@@ -208,6 +208,16 @@ export interface Instructor {
   notes?: string | null;
 }
 
+export type UserRole = 'admin' | 'staff';
+
+export interface PlatformUser {
+  id: number;
+  name: string;
+  email: string;
+  role: UserRole;
+  is_active: boolean;
+}
+
 export interface ClassSchedule {
   id: number;
   instructor_id: number;

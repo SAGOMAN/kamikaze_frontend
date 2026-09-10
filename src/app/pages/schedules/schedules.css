@@ -24,10 +24,121 @@
   font-size: 0.88rem;
 }
 
+.calendar-workspace {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.instructor-palette-slot {
+  flex: 0 0 220px;
+  width: 220px;
+  align-self: stretch;
+}
+
+.instructor-palette {
+  position: fixed;
+  z-index: 20;
+  padding: 0.9rem 0.85rem;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+}
+
+.instructor-palette h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.palette-hint {
+  margin: 0.35rem 0 0.7rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.instructor-chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.instructor-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-muted);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.instructor-chip:hover,
+.instructor-chip.is-active {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow);
+}
+
+.instructor-chip.is-active {
+  cursor: grabbing;
+  transform: scale(0.98);
+}
+
+.instructor-chip-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.instructor-chips-empty {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.instructor-drag-ghost {
+  position: fixed;
+  z-index: 10000;
+  pointer-events: none;
+  transform: translate(10px, 12px);
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  box-shadow: var(--shadow);
+  max-width: 12rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.schedules-calendar.is-drop-target {
+  outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  outline-offset: -2px;
+  border-radius: 8px;
+}
+
+body.is-dragging-instructor,
+body.is-dragging-instructor * {
+  cursor: grabbing !important;
+}
+
 .branch-accordions {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
 }
 
 .branch-accordion {
@@ -226,9 +337,68 @@
 }
 
 @media (max-width: 900px) {
+  .calendar-workspace {
+    flex-direction: column;
+  }
+
+  .instructor-palette-slot {
+    flex: none;
+    width: 100%;
+  }
+
+  .instructor-palette {
+    max-height: min(40vh, 16rem);
+  }
+
+  .instructor-chips {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .instructor-chip {
+    flex: 1 1 9rem;
+  }
+
+  .branch-accordion.is-open {
+    overflow: visible;
+  }
+
+  .branch-accordion.is-open .branch-accordion-body-inner {
+    overflow: visible;
+  }
+
+  .schedules-calendar {
+    padding: 0.5rem 0.4rem 0.55rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .schedules-calendar .fc,
+  .schedules-calendar .fc .fc-scrollgrid {
+    min-width: 42rem;
+  }
+
   .schedules-calendar .fc .fc-col-header-cell-cushion {
-    font-size: 0.75rem;
-    padding: 0.4rem 0.15rem;
+    font-size: 0.72rem;
+    padding: 0.4rem 0.12rem;
+    white-space: nowrap;
+  }
+
+  .schedules-calendar .fc .fc-timegrid-axis,
+  .schedules-calendar .fc .fc-timegrid-slot-label {
+    position: sticky;
+    left: 0;
+    z-index: 5;
+    background: var(--surface);
+  }
+
+  .schedules-calendar .fc .fc-timegrid-axis {
+    background: var(--surface-muted);
+  }
+
+  .schedules-calendar .fc .fc-timegrid-slot-label-cushion {
+    font-size: 0.68rem;
+    padding: 0 0.2rem;
   }
 
   .schedules-calendar .fc .fc-timegrid-slot {

@@ -5,10 +5,11 @@ import { AuthService } from '../../core/auth/auth.service';
 import { FieldError } from '../../shared/forms/field-error';
 import { parseApiError } from '../../shared/forms/parse-api-error';
 import { showInvalid } from '../../shared/forms/show-invalid';
+import { PasswordInput } from '../../shared/password-input/password-input';
 
 @Component({
   selector: 'app-login',
-  imports: [FormsModule, FieldError],
+  imports: [FormsModule, FieldError, PasswordInput],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })

@@ -1,0 +1,202 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1>Usuarios internos</h1>
+      <p>Cuentas con acceso al panel de administración.</p>
+    </div>
+    <div class="filters">
+      <input
+        type="search"
+        placeholder="Buscar…"
+        [(ngModel)]="list.search"
+        name="search"
+        (keyup.enter)="searchNow()"
+      />
+      <button type="button" class="btn ghost" (click)="searchNow()">Buscar</button>
+      <button type="button" class="btn" (click)="openCreate()">Nuevo usuario</button>
+    </div>
+  </header>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Correo</th>
+          <th>Rol</th>
+          <th>Estado</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of items(); track item.id) {
+          <tr>
+            <td>{{ item.name }}</td>
+            <td>{{ item.email }}</td>
+            <td>{{ roleLabel(item.role) }}</td>
+            <td>{{ item.is_active ? 'Activo' : 'Inactivo' }}</td>
+            <td class="row-actions">
+              <button type="button" class="btn ghost" (click)="edit(item)">Editar</button>
+              <button type="button" class="btn ghost" (click)="openResetPassword(item)">
+                Contraseña
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <app-list-pager [meta]="list.meta()" (pageChange)="goToPage($event)" />
+
+  <app-modal
+    [open]="formOpen()"
+    [title]="editingId ? 'Editar usuario' : 'Nuevo usuario'"
+    (closed)="closeForm()"
+  >
+    <form #f="ngForm" id="user-form" class="form-grid" novalidate (ngSubmit)="save(f)">
+      <label>
+        Nombre
+        <input
+          [(ngModel)]="form.name"
+          name="name"
+          required
+          #nameCtrl="ngModel"
+          [class.field-invalid]="showInvalid(f, nameCtrl) || !!apiErrors['name']"
+        />
+        <app-field-error [control]="nameCtrl" [submitted]="f.submitted" [apiError]="apiErrors['name'] || ''" />
+      </label>
+      <label>
+        Correo
+        <input
+          type="email"
+          [(ngModel)]="form.email"
+          name="email"
+          required
+          #emailCtrl="ngModel"
+          [class.field-invalid]="showInvalid(f, emailCtrl) || !!apiErrors['email']"
+        />
+        <app-field-error [control]="emailCtrl" [submitted]="f.submitted" [apiError]="apiErrors['email'] || ''" />
+      </label>
+      <label>
+        Rol
+        <select
+          [(ngModel)]="form.role"
+          name="role"
+          required
+          #roleCtrl="ngModel"
+          [class.field-invalid]="showInvalid(f, roleCtrl) || !!apiErrors['role']"
+        >
+          <option value="admin">Admin</option>
+          <option value="staff">Staff</option>
+        </select>
+        <app-field-error [control]="roleCtrl" [submitted]="f.submitted" [apiError]="apiErrors['role'] || ''" />
+      </label>
+      <label class="checkbox">
+        <input type="checkbox" [(ngModel)]="form.is_active" name="is_active" />
+        Activo
+      </label>
+      @if (!editingId) {
+        <label>
+          Contraseña
+          <app-password-input
+            [(ngModel)]="form.password"
+            name="password"
+            required
+            minlength="8"
+            autocomplete="new-password"
+            #passwordCtrl="ngModel"
+            [invalid]="showInvalid(f, passwordCtrl) || !!apiErrors['password']"
+          />
+          <app-field-error
+            [control]="passwordCtrl"
+            [submitted]="f.submitted"
+            [apiError]="apiErrors['password'] || ''"
+            minLengthMessage="La contraseña debe tener al menos 8 caracteres."
+          />
+        </label>
+        <label>
+          Confirmar contraseña
+          <app-password-input
+            [(ngModel)]="form.password_confirmation"
+            name="password_confirmation"
+            required
+            autocomplete="new-password"
+            #passwordConfirmCtrl="ngModel"
+            [invalid]="showInvalid(f, passwordConfirmCtrl) || !!apiErrors['password']"
+          />
+          <app-field-error
+            [control]="passwordConfirmCtrl"
+            [submitted]="f.submitted"
+            [apiError]="apiErrors['password'] || ''"
+          />
+        </label>
+      }
+      @if (formError) {
+        <p class="error full">{{ formError }}</p>
+      }
+    </form>
+    <div modalFooter class="actions modal-actions">
+      <button class="btn ghost" type="button" (click)="closeForm()">Cancelar</button>
+      <button class="btn" type="submit" form="user-form">
+        {{ editingId ? 'Guardar cambios' : 'Crear' }}
+      </button>
+    </div>
+  </app-modal>
+
+  <app-modal
+    [open]="passwordOpen()"
+    title="Restablecer contraseña"
+    (closed)="closePassword()"
+  >
+    <form
+      #pf="ngForm"
+      id="user-password-form"
+      class="form-grid"
+      novalidate
+      (ngSubmit)="savePassword(pf)"
+    >
+      <label class="full">
+        Nueva contraseña
+        <app-password-input
+          [(ngModel)]="passwordForm.password"
+          name="password"
+          required
+          minlength="8"
+          autocomplete="new-password"
+          #newPassCtrl="ngModel"
+          [invalid]="showInvalid(pf, newPassCtrl) || !!passwordApiErrors['password']"
+        />
+        <app-field-error
+          [control]="newPassCtrl"
+          [submitted]="pf.submitted"
+          [apiError]="passwordApiErrors['password'] || ''"
+          minLengthMessage="La contraseña debe tener al menos 8 caracteres."
+        />
+      </label>
+      <label class="full">
+        Confirmar contraseña
+        <app-password-input
+          [(ngModel)]="passwordForm.password_confirmation"
+          name="password_confirmation"
+          required
+          autocomplete="new-password"
+          #newPassConfirmCtrl="ngModel"
+          [invalid]="showInvalid(pf, newPassConfirmCtrl) || !!passwordApiErrors['password']"
+        />
+        <app-field-error
+          [control]="newPassConfirmCtrl"
+          [submitted]="pf.submitted"
+          [apiError]="passwordApiErrors['password'] || ''"
+        />
+      </label>
+      @if (passwordError) {
+        <p class="error full">{{ passwordError }}</p>
+      }
+    </form>
+    <div modalFooter class="actions modal-actions">
+      <button class="btn ghost" type="button" (click)="closePassword()">Cancelar</button>
+      <button class="btn" type="submit" form="user-password-form">Actualizar</button>
+    </div>
+  </app-modal>
+</section>

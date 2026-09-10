@@ -19,14 +19,13 @@
     </label>
     <label>
       Contraseña
-      <input
-        type="password"
+      <app-password-input
         name="password"
         [(ngModel)]="password"
         required
         autocomplete="current-password"
         #passwordCtrl="ngModel"
-        [class.field-invalid]="showInvalid(f, passwordCtrl) || !!apiErrors['password']"
+        [invalid]="showInvalid(f, passwordCtrl) || !!apiErrors['password']"
       />
       <app-field-error
         [control]="passwordCtrl"

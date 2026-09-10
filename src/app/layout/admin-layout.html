@@ -61,9 +61,13 @@
       <a routerLink="/app/expenses" routerLinkActive="active">Gastos</a>
       <a routerLink="/app/instructors" routerLinkActive="active">Profesores</a>
       <a routerLink="/app/schedules" routerLinkActive="active">Agenda</a>
+      @if (auth.isAdmin()) {
+        <a routerLink="/app/users" routerLinkActive="active">Usuarios</a>
+      }
     </nav>
     <div class="sidebar-foot">
       <span>{{ auth.user()?.name }}</span>
+      <button type="button" class="linkish" (click)="openPassword()">Cambiar contraseña</button>
       <button type="button" class="linkish" (click)="logout()">Cerrar sesión</button>
     </div>
   </aside>
@@ -72,3 +76,71 @@
     <router-outlet />
   </main>
 </div>
+
+<app-modal [open]="passwordOpen()" title="Cambiar contraseña" (closed)="closePassword()">
+  <form
+    #pf="ngForm"
+    id="own-password-form"
+    class="form-grid"
+    novalidate
+    (ngSubmit)="savePassword(pf)"
+  >
+    <label class="full">
+      Contraseña actual
+      <app-password-input
+        [(ngModel)]="passwordForm.current_password"
+        name="current_password"
+        required
+        autocomplete="current-password"
+        #currentPassCtrl="ngModel"
+        [invalid]="showInvalid(pf, currentPassCtrl) || !!passwordApiErrors['current_password']"
+      />
+      <app-field-error
+        [control]="currentPassCtrl"
+        [submitted]="pf.submitted"
+        [apiError]="passwordApiErrors['current_password'] || ''"
+      />
+    </label>
+    <label class="full">
+      Nueva contraseña
+      <app-password-input
+        [(ngModel)]="passwordForm.password"
+        name="password"
+        required
+        minlength="8"
+        autocomplete="new-password"
+        #newPassCtrl="ngModel"
+        [invalid]="showInvalid(pf, newPassCtrl) || !!passwordApiErrors['password']"
+      />
+      <app-field-error
+        [control]="newPassCtrl"
+        [submitted]="pf.submitted"
+        [apiError]="passwordApiErrors['password'] || ''"
+        minLengthMessage="La contraseña debe tener al menos 8 caracteres."
+      />
+    </label>
+    <label class="full">
+      Confirmar contraseña
+      <app-password-input
+        [(ngModel)]="passwordForm.password_confirmation"
+        name="password_confirmation"
+        required
+        autocomplete="new-password"
+        #confirmPassCtrl="ngModel"
+        [invalid]="showInvalid(pf, confirmPassCtrl) || !!passwordApiErrors['password']"
+      />
+      <app-field-error
+        [control]="confirmPassCtrl"
+        [submitted]="pf.submitted"
+        [apiError]="passwordApiErrors['password'] || ''"
+      />
+    </label>
+    @if (passwordError) {
+      <p class="error full">{{ passwordError }}</p>
+    }
+  </form>
+  <div modalFooter class="actions modal-actions">
+    <button class="btn ghost" type="button" (click)="closePassword()">Cancelar</button>
+    <button class="btn" type="submit" form="own-password-form">Actualizar</button>
+  </div>
+</app-modal>

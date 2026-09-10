@@ -113,7 +113,8 @@ textarea {
 
 input.field-invalid,
 select.field-invalid,
-textarea.field-invalid {
+textarea.field-invalid,
+.password-field.field-invalid .password-field__input {
   border-color: var(--error);
 }
 

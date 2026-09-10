@@ -118,6 +118,12 @@ describe('SchedulesPage', () => {
     expect(component.calendarOptions.plugins?.length).toBeGreaterThan(0);
   });
 
+  it('en viewport compacto usa nombres cortos de los días', () => {
+    spyOnProperty(window, 'innerWidth', 'get').and.returnValue(390);
+    const options = component['buildCalendarOptions'](1, []);
+    expect(options.dayHeaderFormat).toEqual({ weekday: 'short' });
+  });
+
   it('al iniciar carga instructores, sucursales y listado paginado', () => {
     component.ngOnInit();
 
@@ -380,6 +386,221 @@ describe('SchedulesPage', () => {
     expect(btn).toBeTruthy();
     expect(btn?.getAttribute('aria-label')).toBe('Eliminar horario');
   }));
+
+  it('overlappingSchedules encuentra todos los horarios del rango', fakeAsync(() => {
+    const second: ClassSchedule = {
+      id: 102,
+      instructor_id: 5,
+      branch_id: 1,
+      day_of_week: 1,
+      start_time: '20:00:00',
+      end_time: '21:00:00',
+      is_active: true,
+      instructor,
+      branch,
+    };
+    component.ngOnInit();
+    component.calendarItems.set([schedule, inactiveSchedule, northSchedule, second]);
+
+    const found = component.overlappingSchedules(1, 1, '18:00', '21:00');
+    expect(found.map((s) => s.id)).toEqual([100, 102]);
+  }));
+
+  it('assignInstructorToRange actualiza el profesor en cada horario cubierto', fakeAsync(() => {
+    const otherInstructor: Instructor = {
+      id: 9,
+      name: 'Sensei Ana',
+      is_active: true,
+      color: '#EF4444',
+    };
+    const second: ClassSchedule = {
+      id: 102,
+      instructor_id: 5,
+      branch_id: 1,
+      day_of_week: 1,
+      start_time: '20:00:00',
+      end_time: '21:00:00',
+      is_active: true,
+      instructor,
+      branch,
+    };
+    component.ngOnInit();
+    component.setViewMode('calendar');
+    tick();
+    component.calendarItems.set([schedule, inactiveSchedule, northSchedule, second]);
+    api.put.and.returnValue(of({ id: 100 }));
+    api.get.calls.reset();
+
+    const start = new Date(2026, 6, 27, 18, 0, 0);
+    const end = new Date(2026, 6, 27, 21, 0, 0);
+    component.assignInstructorToRange(1, start, end, otherInstructor);
+
+    expect(api.put).toHaveBeenCalledTimes(2);
+    expect(api.put).toHaveBeenCalledWith('/class-schedules/100', { instructor_id: 9 });
+    expect(api.put).toHaveBeenCalledWith('/class-schedules/102', { instructor_id: 9 });
+    expect(api.post).not.toHaveBeenCalled();
+    expect(api.get).toHaveBeenCalledWith('/class-schedules');
+  }));
+
+  it('hourlySlots parte el rango en bloques de 1 hora', () => {
+    const start = new Date(2026, 6, 27, 14, 0, 0);
+    const end = new Date(2026, 6, 27, 18, 0, 0);
+    const slots = component.hourlySlots(start, end);
+
+    expect(slots.map((slot) => [slot.start.getHours(), slot.end.getHours()])).toEqual([
+      [14, 15],
+      [15, 16],
+      [16, 17],
+      [17, 18],
+    ]);
+  });
+
+  it('assignInstructorToRange crea un horario de 1h por cada slot vacío', fakeAsync(() => {
+    component.ngOnInit();
+    component.setViewMode('calendar');
+    tick();
+    api.post.and.returnValue(of({ id: 400 }));
+    api.get.calls.reset();
+
+    const start = new Date(2026, 6, 27, 14, 0, 0);
+    const end = new Date(2026, 6, 27, 18, 0, 0);
+    component.assignInstructorToRange(1, start, end, instructor);
+
+    expect(api.post).toHaveBeenCalledTimes(4);
+    expect(api.post).toHaveBeenCalledWith(
+      '/class-schedules',
+      jasmine.objectContaining({ start_time: '14:00', end_time: '15:00', instructor_id: 5, branch_id: 1 }),
+    );
+    expect(api.post).toHaveBeenCalledWith(
+      '/class-schedules',
+      jasmine.objectContaining({ start_time: '15:00', end_time: '16:00' }),
+    );
+    expect(api.post).toHaveBeenCalledWith(
+      '/class-schedules',
+      jasmine.objectContaining({ start_time: '16:00', end_time: '17:00' }),
+    );
+    expect(api.post).toHaveBeenCalledWith(
+      '/class-schedules',
+      jasmine.objectContaining({ start_time: '17:00', end_time: '18:00', day_of_week: 1 }),
+    );
+    expect(api.put).not.toHaveBeenCalled();
+    expect(api.get).toHaveBeenCalledWith('/class-schedules');
+  }));
+
+  it('assignInstructorToRange no llama API si los horarios ya tienen ese profesor', fakeAsync(() => {
+    component.ngOnInit();
+    component.setViewMode('calendar');
+    tick();
+    api.get.calls.reset();
+
+    const start = new Date(2026, 6, 27, 18, 0, 0);
+    const end = new Date(2026, 6, 27, 20, 0, 0);
+    component.assignInstructorToRange(1, start, end, instructor);
+
+    expect(api.put).not.toHaveBeenCalled();
+    expect(api.post).not.toHaveBeenCalled();
+  }));
+
+  it('select durante el drag de profesor no abre el modal', fakeAsync(() => {
+    component.ngOnInit();
+    component.setViewMode('calendar');
+    tick();
+    component.dragInstructor.set(instructor);
+
+    const unselect = jasmine.createSpy('unselect');
+    const start = new Date(2026, 6, 27, 18, 0, 0);
+    const end = new Date(2026, 6, 27, 20, 0, 0);
+    const info = {
+      start,
+      end,
+      view: { calendar: { unselect } },
+    } as unknown as DateSelectArg;
+
+    component.optionsForBranch(1)?.select?.(info);
+
+    expect(component.formOpen()).toBeFalse();
+  }));
+
+  function mountBranchCalendar(opts: {
+    branchId: number;
+    open: boolean;
+    top: number;
+    height: number;
+    date: string;
+    time: string;
+  }) {
+    const acc = document.createElement('div');
+    acc.className = opts.open ? 'branch-accordion is-open' : 'branch-accordion';
+    acc.style.cssText = `position:fixed;left:8px;top:${opts.top}px;width:240px;height:${opts.height}px;overflow:hidden;z-index:${opts.open ? 3 : 1}`;
+    acc.innerHTML = `
+      <div class="branch-accordion-body-inner" style="height:100%;overflow:hidden">
+        <div class="schedules-calendar" data-branch-id="${opts.branchId}">
+          <div class="fc-timegrid-body" style="width:240px;height:${opts.open ? opts.height : 800}px">
+            <div class="fc-timegrid-cols">
+              <div class="fc-timegrid-col" data-date="${opts.date}" style="width:240px;height:100%"></div>
+            </div>
+            <div class="fc-timegrid-slot-lane" data-time="${opts.time}" style="width:240px;height:100%"></div>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(acc);
+    return acc;
+  }
+
+  it('slotFromPoint asigna a la sucursal de abajo, no a la de arriba recortada', () => {
+    const upper = mountBranchCalendar({
+      branchId: 1,
+      open: false,
+      top: 0,
+      height: 40,
+      date: '2026-07-27',
+      time: '10:00:00',
+    });
+    const lower = mountBranchCalendar({
+      branchId: 2,
+      open: true,
+      top: 200,
+      height: 120,
+      date: '2026-07-27',
+      time: '14:00:00',
+    });
+
+    const slot = component.slotFromPoint(40, 250);
+
+    expect(slot?.branchId).toBe(2);
+    expect(slot?.start.getHours()).toBe(14);
+
+    upper.remove();
+    lower.remove();
+  });
+
+  it('slotFromPoint elige la sucursal inferior cuando ambas están abiertas', () => {
+    const upper = mountBranchCalendar({
+      branchId: 1,
+      open: true,
+      top: 0,
+      height: 100,
+      date: '2026-07-27',
+      time: '10:00:00',
+    });
+    const lower = mountBranchCalendar({
+      branchId: 2,
+      open: true,
+      top: 220,
+      height: 120,
+      date: '2026-07-27',
+      time: '16:00:00',
+    });
+
+    const slot = component.slotFromPoint(40, 270);
+
+    expect(slot?.branchId).toBe(2);
+    expect(slot?.start.getHours()).toBe(16);
+
+    upper.remove();
+    lower.remove();
+  });
 
   it('removeFromForm elimina el horario en edición', async () => {
     component.ngOnInit();

@@ -1,13 +1,16 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, computed, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { UserRole } from '../models';
 
 export interface AuthUser {
   id: number;
   name: string;
   email: string;
+  role: UserRole;
+  is_active: boolean;
 }
 
 interface LoginResponse {
@@ -19,6 +22,7 @@ interface LoginResponse {
 export class AuthService {
   private readonly tokenKey = 'hanuman_token';
   readonly user = signal<AuthUser | null>(null);
+  readonly isAdmin = computed(() => this.user()?.role === 'admin');
 
   constructor(
     private readonly http: HttpClient,
@@ -26,7 +30,11 @@ export class AuthService {
   ) {
     const raw = localStorage.getItem('hanuman_user');
     if (raw) {
-      this.user.set(JSON.parse(raw));
+      try {
+        this.user.set(JSON.parse(raw));
+      } catch {
+        localStorage.removeItem('hanuman_user');
+      }
     }
   }
 
@@ -42,10 +50,23 @@ export class AuthService {
     return this.http.post<LoginResponse>(`${environment.apiUrl}/login`, { email, password }).pipe(
       tap((res) => {
         localStorage.setItem(this.tokenKey, res.token);
-        localStorage.setItem('hanuman_user', JSON.stringify(res.user));
-        this.user.set(res.user);
+        this.persistUser(res.user);
       }),
     );
+  }
+
+  refreshMe() {
+    return this.http.get<AuthUser>(`${environment.apiUrl}/me`).pipe(
+      tap((user) => this.persistUser(user)),
+    );
+  }
+
+  changePassword(payload: {
+    current_password: string;
+    password: string;
+    password_confirmation: string;
+  }) {
+    return this.http.put<{ message: string }>(`${environment.apiUrl}/me/password`, payload);
   }
 
   logout() {
@@ -65,5 +86,10 @@ export class AuthService {
       next: finish,
       error: finish,
     });
+  }
+
+  private persistUser(user: AuthUser) {
+    localStorage.setItem('hanuman_user', JSON.stringify(user));
+    this.user.set(user);
   }
 }

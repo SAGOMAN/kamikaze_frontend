@@ -1,18 +1,33 @@
 import { Component, DestroyRef, HostListener, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormsModule, NgForm } from '@angular/forms';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 import { AuthService } from '../core/auth/auth.service';
+import { FieldError } from '../shared/forms/field-error';
+import { parseApiError } from '../shared/forms/parse-api-error';
+import { showInvalid } from '../shared/forms/show-invalid';
+import { Modal } from '../shared/modal/modal';
+import { PasswordInput } from '../shared/password-input/password-input';
 
 @Component({
   selector: 'app-admin-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule, Modal, FieldError, PasswordInput],
   templateUrl: './admin-layout.html',
   styleUrl: './admin-layout.css',
 })
 export class AdminLayout implements OnInit {
   readonly menuOpen = signal(false);
   readonly isMobile = signal(false);
+  readonly passwordOpen = signal(false);
+  passwordForm = {
+    current_password: '',
+    password: '',
+    password_confirmation: '',
+  };
+  passwordError = '';
+  passwordApiErrors: Record<string, string> = {};
+  readonly showInvalid = showInvalid;
 
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
@@ -37,10 +52,16 @@ export class AdminLayout implements OnInit {
       this.mediaQuery?.removeEventListener('change', onChange);
       document.body.style.overflow = '';
     });
+
+    this.auth.refreshMe().subscribe({ error: () => undefined });
   }
 
   @HostListener('document:keydown.escape')
   onEscape() {
+    if (this.passwordOpen()) {
+      this.closePassword();
+      return;
+    }
     if (this.menuOpen()) {
       this.closeMenu();
     }
@@ -57,6 +78,40 @@ export class AdminLayout implements OnInit {
     }
     this.menuOpen.set(false);
     this.syncBodyScroll();
+  }
+
+  openPassword() {
+    this.passwordForm = {
+      current_password: '',
+      password: '',
+      password_confirmation: '',
+    };
+    this.passwordError = '';
+    this.passwordApiErrors = {};
+    this.passwordOpen.set(true);
+  }
+
+  closePassword() {
+    this.passwordOpen.set(false);
+    this.passwordError = '';
+    this.passwordApiErrors = {};
+  }
+
+  savePassword(f: NgForm) {
+    this.passwordError = '';
+    this.passwordApiErrors = {};
+    if (f.invalid) {
+      return;
+    }
+
+    this.auth.changePassword(this.passwordForm).subscribe({
+      next: () => this.closePassword(),
+      error: (err) => {
+        const parsed = parseApiError(err, 'No se pudo cambiar la contraseña');
+        this.passwordError = parsed.message;
+        this.passwordApiErrors = parsed.fieldErrors;
+      },
+    });
   }
 
   logout() {

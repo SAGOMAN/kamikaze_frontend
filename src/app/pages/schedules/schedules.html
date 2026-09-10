@@ -69,11 +69,40 @@
     <app-list-pager [meta]="list.meta()" (pageChange)="goToPage($event)" />
   } @else {
     <p class="calendar-hint">
-      Un calendario por sucursal. Arrastra un rango vacío para crear, clic para editar, bordes para
-      redimensionar, × para eliminar.
+      Arrastra un profesor a uno o varios slots. También puedes seleccionar un rango vacío para crear, clic para editar,
+      bordes para redimensionar, × para eliminar.
     </p>
+    @if (calendarError()) {
+      <p class="error">{{ calendarError() }}</p>
+    }
 
-    <div class="branch-accordions">
+    <div class="calendar-workspace" [class.is-dragging-instructor]="!!dragInstructor()">
+      <div class="instructor-palette-slot" #paletteSlot>
+        <aside class="instructor-palette panel" #palettePanel aria-label="Profesores">
+          <h2>Profesores</h2>
+          <p class="palette-hint">Arrastra sobre el calendario. Cada hora se guarda como un horario aparte.</p>
+          <ul class="instructor-chips">
+            @for (i of instructors(); track i.id) {
+              <li
+                class="instructor-chip"
+                [class.is-active]="dragInstructor()?.id === i.id"
+                (pointerdown)="onInstructorPointerDown($event, i)"
+              >
+                <span
+                  class="color-swatch"
+                  [style.background]="i.color || '#64748B'"
+                  [title]="i.color || '#64748B'"
+                ></span>
+                <span class="instructor-chip-name">{{ i.name }}</span>
+              </li>
+            } @empty {
+              <li class="instructor-chips-empty">No hay profesores activos.</li>
+            }
+          </ul>
+        </aside>
+      </div>
+
+      <div class="branch-accordions">
       @for (panel of branchPanels(); track panel.branch.id) {
         <div
           class="branch-accordion panel"
@@ -97,7 +126,11 @@
           </button>
           <div class="branch-accordion-body" (transitionend)="onAccordionTransitionEnd($event)">
             <div class="branch-accordion-body-inner">
-              <div class="schedules-calendar">
+              <div
+                class="schedules-calendar"
+                [attr.data-branch-id]="panel.branch.id"
+                [class.is-drop-target]="dragOverBranchId() === panel.branch.id"
+              >
                 <full-calendar [options]="panel.options"></full-calendar>
               </div>
             </div>
@@ -108,6 +141,19 @@
           <p>No hay sucursales para mostrar.</p>
         </div>
       }
+      </div>
+    </div>
+  }
+
+  @if (dragInstructor(); as ins) {
+    <div
+      class="instructor-drag-ghost"
+      [style.left.px]="ghostX()"
+      [style.top.px]="ghostY()"
+      [style.background]="ins.color || '#64748B'"
+      [style.color]="contrastText(ins.color || '#64748B')"
+    >
+      {{ ins.name }}
     </div>
   }
 

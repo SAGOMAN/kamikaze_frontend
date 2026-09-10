@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { adminGuard } from './core/auth/admin.guard';
 import { authGuard } from './core/auth/auth.guard';
 import { AdminLayout } from './layout/admin-layout';
 import { LoginPage } from './pages/login/login';
@@ -12,6 +13,7 @@ import { SalesPage } from './pages/sales/sales';
 import { ExpensesPage } from './pages/expenses/expenses';
 import { InstructorsPage } from './pages/instructors/instructors';
 import { SchedulesPage } from './pages/schedules/schedules';
+import { UsersPage } from './pages/users/users';
 
 export const routes: Routes = [
   { path: 'login', component: LoginPage },
@@ -31,6 +33,7 @@ export const routes: Routes = [
       { path: 'expenses', component: ExpensesPage },
       { path: 'instructors', component: InstructorsPage },
       { path: 'schedules', component: SchedulesPage },
+      { path: 'users', canActivate: [adminGuard], component: UsersPage },
     ],
   },
   { path: '', pathMatch: 'full', redirectTo: 'app/dashboard' },
