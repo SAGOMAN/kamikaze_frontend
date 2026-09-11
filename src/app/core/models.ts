@@ -60,6 +60,7 @@ export interface Product {
   sku?: string | null;
   description?: string | null;
   unit_price: number | string;
+  last_cost?: number | string | null;
   is_active: boolean;
   stocks?: ProductStock[];
 }
@@ -92,6 +93,8 @@ export interface Sale {
   items?: SaleItem[];
 }
 
+export type ExpenseSource = 'operational' | 'merchandise';
+
 export interface Expense {
   id: number;
   category: string;
@@ -100,7 +103,12 @@ export interface Expense {
   expense_date: string;
   branch_id?: number | null;
   notes?: string | null;
+  source?: ExpenseSource;
+  product_id?: number | null;
+  quantity?: number | null;
+  unit_cost?: number | string | null;
   branch?: Branch;
+  product?: Product;
 }
 
 export interface MonthlyReportTopStudent {
@@ -159,7 +167,7 @@ export interface MonthlyReport {
     sales: number;
     total: number;
   };
-  expenses: { total: number };
+  expenses: { total: number; merchandise: number; operational: number };
   balance: number;
   tops: MonthlyReportTops;
 }
@@ -174,7 +182,7 @@ export interface PeriodReportMonth {
     sales: number;
     total: number;
   };
-  expenses: { total: number };
+  expenses: { total: number; merchandise: number; operational: number };
   balance: number;
 }
 
@@ -192,7 +200,7 @@ export interface PeriodReport {
     sales: number;
     total: number;
   };
-  expenses: { total: number };
+  expenses: { total: number; merchandise: number; operational: number };
   balance: number;
   months: PeriodReportMonth[];
   tops: MonthlyReportTops | null;
@@ -216,6 +224,24 @@ export interface PlatformUser {
   email: string;
   role: UserRole;
   is_active: boolean;
+}
+
+export interface CatalogItem {
+  id: number;
+  catalog_id: number;
+  name: string;
+  code?: string | null;
+  sort_order: number;
+  is_active: boolean;
+}
+
+export interface Catalog {
+  id: number;
+  code: string;
+  name: string;
+  description?: string | null;
+  is_active: boolean;
+  items?: CatalogItem[];
 }
 
 export interface ClassSchedule {

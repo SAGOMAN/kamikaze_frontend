@@ -2,9 +2,9 @@
   <header class="page-header">
     <div>
       <h1>Resumen</h1>
-      <p>Ingresos vs egresos por período.</p>
+      <p>Ingresos vs egresos por período. El inventario ya está descontado al comprar.</p>
     </div>
-    <div class="filters">
+    <div class="filters period-filters">
       <label>
         Período
         <select [(ngModel)]="period" name="period">
@@ -18,32 +18,36 @@
         Año
         <input type="number" [(ngModel)]="year" name="year" />
       </label>
-      @if (period === 'month') {
-        <label>
-          Mes
-          <input type="number" min="1" max="12" [(ngModel)]="month" name="month" />
-        </label>
-      }
-      @if (period === 'quarter') {
-        <label>
-          Trimestre
-          <select [(ngModel)]="quarter" name="quarter">
-            <option [ngValue]="1">Q1 (Ene–Mar)</option>
-            <option [ngValue]="2">Q2 (Abr–Jun)</option>
-            <option [ngValue]="3">Q3 (Jul–Sep)</option>
-            <option [ngValue]="4">Q4 (Oct–Dic)</option>
-          </select>
-        </label>
-      }
-      @if (period === 'semester') {
-        <label>
-          Semestre
-          <select [(ngModel)]="semester" name="semester">
-            <option [ngValue]="1">S1 (Ene–Jun)</option>
-            <option [ngValue]="2">S2 (Jul–Dic)</option>
-          </select>
-        </label>
-      }
+      <div class="period-extra" aria-live="polite">
+        @if (period === 'month') {
+          <label>
+            Mes
+            <select [(ngModel)]="month" name="month">
+              @for (name of monthNames; track $index) {
+                <option [ngValue]="$index + 1">{{ name }}</option>
+              }
+            </select>
+          </label>
+        } @else if (period === 'quarter') {
+          <label>
+            Trimestre
+            <select [(ngModel)]="quarter" name="quarter">
+              <option [ngValue]="1">Q1 (Ene–Mar)</option>
+              <option [ngValue]="2">Q2 (Abr–Jun)</option>
+              <option [ngValue]="3">Q3 (Jul–Sep)</option>
+              <option [ngValue]="4">Q4 (Oct–Dic)</option>
+            </select>
+          </label>
+        } @else if (period === 'semester') {
+          <label>
+            Semestre
+            <select [(ngModel)]="semester" name="semester">
+              <option [ngValue]="1">S1 (Ene–Jun)</option>
+              <option [ngValue]="2">S2 (Jul–Dic)</option>
+            </select>
+          </label>
+        }
+      </div>
       <button type="button" class="btn" (click)="load()">Actualizar</button>
       <button type="button" class="btn ghost" (click)="exportExcel()" [disabled]="exporting()">
         {{ exporting() ? 'Exportando…' : 'Exportar Excel' }}
@@ -59,19 +63,27 @@
     <p class="period-label muted">{{ r.label }} · {{ r.from }} — {{ r.to }}</p>
 
     <div class="stats">
-      <article>
+      <article class="stat-income">
         <h2>Mensualidades</h2>
         <p>{{ money(r.income.membership_payments) }}</p>
       </article>
-      <article>
+      <article class="stat-income">
         <h2>Ventas</h2>
         <p>{{ money(r.income.sales) }}</p>
       </article>
-      <article>
+      <article class="stat-income-total">
         <h2>Ingresos totales</h2>
         <p>{{ money(r.income.total) }}</p>
       </article>
-      <article>
+      <article class="stat-expense">
+        <h2>Mercancía</h2>
+        <p>{{ money(r.expenses.merchandise) }}</p>
+      </article>
+      <article class="stat-expense">
+        <h2>Operativos</h2>
+        <p>{{ money(r.expenses.operational) }}</p>
+      </article>
+      <article class="stat-expense-total">
         <h2>Gastos</h2>
         <p>{{ money(r.expenses.total) }}</p>
       </article>
@@ -94,6 +106,8 @@
               <th>Mensualidades</th>
               <th>Ventas</th>
               <th>Ingresos</th>
+              <th>Mercancía</th>
+              <th>Operativos</th>
               <th>Gastos</th>
               <th>Balance</th>
             </tr>
@@ -105,6 +119,8 @@
                 <td>{{ money(m.income.membership_payments) }}</td>
                 <td>{{ money(m.income.sales) }}</td>
                 <td>{{ money(m.income.total) }}</td>
+                <td>{{ money(m.expenses.merchandise) }}</td>
+                <td>{{ money(m.expenses.operational) }}</td>
                 <td>{{ money(m.expenses.total) }}</td>
                 <td>{{ money(m.balance) }}</td>
               </tr>

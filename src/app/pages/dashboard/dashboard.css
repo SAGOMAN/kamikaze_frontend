@@ -1,5 +1,73 @@
+.period-filters {
+  align-items: end;
+}
+
+.period-extra {
+  display: flex;
+  align-items: end;
+  width: 11.25rem;
+  min-width: 11.25rem;
+  min-height: 3.85rem;
+  flex-shrink: 0;
+}
+
+.period-extra label {
+  width: 100%;
+  margin: 0;
+}
+
+.period-extra input,
+.period-extra select {
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .period-extra {
+    flex: 1 1 140px;
+    width: auto;
+  }
+}
+
 .period-label {
   margin: 0;
+}
+
+.stats .stat-income {
+  background: #e7f6ec;
+  border-color: #b7dfc4;
+}
+
+.stats .stat-income h2 {
+  color: #2f6b45;
+}
+
+.stats .stat-income-total {
+  background: #3d9a63;
+  border-color: #2f7a4e;
+  color: #ffffff;
+}
+
+.stats .stat-income-total h2 {
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.stats .stat-expense {
+  background: #e7f0f8;
+  border-color: #b7cfe4;
+}
+
+.stats .stat-expense h2 {
+  color: #2f5578;
+}
+
+.stats .stat-expense-total {
+  background: #3b7ab8;
+  border-color: #2f6496;
+  color: #ffffff;
+}
+
+.stats .stat-expense-total h2 {
+  color: rgba(255, 255, 255, 0.86);
 }
 
 .breakdown {

@@ -7,6 +7,7 @@ import { Component, input, output } from '@angular/core';
       <div class="modal-backdrop" (click)="onBackdrop($event)" role="presentation">
         <div
           class="modal-dialog"
+          [class.modal-dialog-wide]="size() === 'wide'"
           role="dialog"
           aria-modal="true"
           [attr.aria-label]="title()"
@@ -32,6 +33,7 @@ import { Component, input, output } from '@angular/core';
 export class Modal {
   readonly open = input(false);
   readonly title = input('');
+  readonly size = input<'default' | 'wide'>('default');
   readonly closed = output<void>();
 
   onBackdrop(event: MouseEvent) {

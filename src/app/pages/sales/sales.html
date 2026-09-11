@@ -1,67 +1,123 @@
-<section class="page">
+<section class="page sales-page">
   <header class="page-header">
     <div>
       <h1>Ventas</h1>
-      <p>Registro de ventas con descuento de inventario.</p>
+      <p>Registra ventas con el inventario de cada sucursal.</p>
     </div>
-    <div class="filters">
+    <div class="filters sales-toolbar">
       <input
         type="search"
-        placeholder="Buscar…"
+        placeholder="Buscar por notas, sucursal o producto…"
         [(ngModel)]="list.search"
         name="search"
         (keyup.enter)="searchNow()"
       />
+      <label class="sales-branch-filter">
+        Sucursal
+        <select [(ngModel)]="listBranchId" name="listBranchId" (ngModelChange)="onListBranchChange()">
+          <option [ngValue]="null">Todas</option>
+          @for (b of branches(); track b.id) {
+            <option [ngValue]="b.id">{{ b.name }}</option>
+          }
+        </select>
+      </label>
       <button type="button" class="btn ghost" (click)="searchNow()">Buscar</button>
       <button type="button" class="btn" (click)="openCreate()">Registrar venta</button>
     </div>
   </header>
 
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>Sucursal</th>
-          <th>Total</th>
-          <th>Ítems</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (sale of sales(); track sale.id) {
+  @if (sales().length === 0) {
+    <div class="panel sales-empty">
+      <p>No hay ventas para mostrar.</p>
+      <button type="button" class="btn" (click)="openCreate()">Registrar la primera venta</button>
+    </div>
+  } @else {
+    <div class="table-wrap sales-desktop">
+      <table>
+        <thead>
           <tr>
-            <td>{{ sale.sale_date | timestamp }}</td>
-            <td>{{ sale.branch?.name || sale.branch_id }}</td>
-            <td>{{ sale.total }}</td>
-            <td>{{ sale.items?.length || 0 }}</td>
-            <td class="row-actions">
-              <button type="button" class="btn danger" (click)="remove(sale.id)">Eliminar</button>
-            </td>
+            <th>Fecha</th>
+            <th>Sucursal</th>
+            <th>Ítems</th>
+            <th>Total</th>
+            <th></th>
           </tr>
-        }
-      </tbody>
-    </table>
-  </div>
+        </thead>
+        <tbody>
+          @for (sale of sales(); track sale.id) {
+            <tr>
+              <td>{{ sale.sale_date | timestamp }}</td>
+              <td>
+                <span class="sale-branch">
+                  <span
+                    class="color-swatch"
+                    [style.background]="sale.branch?.color || 'var(--border-strong)'"
+                  ></span>
+                  {{ sale.branch?.name || sale.branch_id }}
+                </span>
+              </td>
+              <td class="sale-items-cell">{{ itemsSummary(sale) }}</td>
+              <td class="sale-total-cell">{{ formatMoney(sale.total) }}</td>
+              <td class="row-actions">
+                <button type="button" class="btn danger" (click)="remove(sale.id)">Eliminar</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <ul class="sale-card-list">
+      @for (sale of sales(); track sale.id) {
+        <li class="panel sale-card">
+          <div class="sale-card-top">
+            <div>
+              <strong>{{ formatMoney(sale.total) }}</strong>
+              <p>{{ sale.sale_date | timestamp }}</p>
+            </div>
+            <span class="sale-branch">
+              <span
+                class="color-swatch"
+                [style.background]="sale.branch?.color || 'var(--border-strong)'"
+              ></span>
+              {{ sale.branch?.name || sale.branch_id }}
+            </span>
+          </div>
+          <p class="sale-card-items">{{ itemsSummary(sale) }}</p>
+          @if (sale.notes) {
+            <p class="sale-card-notes">{{ sale.notes }}</p>
+          }
+          <button type="button" class="btn danger" (click)="remove(sale.id)">Eliminar</button>
+        </li>
+      }
+    </ul>
+  }
 
   <app-list-pager [meta]="list.meta()" (pageChange)="goToPage($event)" />
 
-  <app-modal [open]="formOpen()" title="Registrar venta" (closed)="closeForm()">
+  <app-modal [open]="formOpen()" title="Registrar venta" size="wide" (closed)="closeForm()">
     <form #f="ngForm" id="sale-form" novalidate (ngSubmit)="save(f)">
       <div class="form-grid">
         <label>
           Sucursal
-          <select
-            [(ngModel)]="branchId"
-            name="branch_id"
-            required
-            #branchCtrl="ngModel"
-            [class.field-invalid]="showInvalid(f, branchCtrl) || !!apiErrors['branch_id']"
-          >
-            @for (b of branches(); track b.id) {
-              <option [ngValue]="b.id">{{ b.name }}</option>
-            }
-          </select>
+          <span class="branch-select-wrap">
+            <span
+              class="color-swatch"
+              [style.background]="selectedBranch()?.color || 'var(--border-strong)'"
+            ></span>
+            <select
+              [ngModel]="selectedBranchId()"
+              (ngModelChange)="onFormBranchChange($event)"
+              name="branch_id"
+              required
+              #branchCtrl="ngModel"
+              [class.field-invalid]="showInvalid(f, branchCtrl) || !!apiErrors['branch_id']"
+            >
+              @for (b of branches(); track b.id) {
+                <option [ngValue]="b.id">{{ b.name }}</option>
+              }
+            </select>
+          </span>
           <app-field-error
             [control]="branchCtrl"
             [submitted]="f.submitted"
@@ -86,78 +142,150 @@
         </label>
         <label class="full">
           Notas
-          <input
+          <textarea
             [(ngModel)]="notes"
             name="notes"
+            rows="2"
+            placeholder="Opcional"
             #notesCtrl="ngModel"
             [class.field-invalid]="showInvalid(f, notesCtrl) || !!apiErrors['notes']"
-          />
+          ></textarea>
           <app-field-error [control]="notesCtrl" [submitted]="f.submitted" [apiError]="apiErrors['notes'] || ''" />
         </label>
       </div>
 
-      <div class="sale-items">
-        <div class="sale-items-head">
-          <h3>Ítems</h3>
-          <button class="btn ghost" type="button" (click)="addItem()">+ Ítem</button>
-        </div>
-
-        <div class="sale-items-list">
-          @for (item of items; track $index; let i = $index) {
-            <div class="sale-item-row">
-              <span class="sale-item-index" aria-hidden="true">{{ i + 1 }}</span>
-              <label class="sale-item-product">
-                Producto
-                <select
-                  [(ngModel)]="item.product_id"
-                  [name]="'product_' + i"
-                  required
-                  #productCtrl="ngModel"
-                  [class.field-invalid]="showInvalid(f, productCtrl)"
-                >
-                  <option [ngValue]="null" disabled>Selecciona</option>
-                  @for (p of products(); track p.id) {
-                    <option [ngValue]="p.id">
-                      {{ p.name }} — {{ p.unit_price }} — Stock: {{ stockFor(p) }}
-                    </option>
-                  }
-                </select>
-                <app-field-error [control]="productCtrl" [submitted]="f.submitted" />
-              </label>
-              <label class="sale-item-qty">
-                Cantidad
-                <input
-                  type="number"
-                  min="1"
-                  [(ngModel)]="item.quantity"
-                  [name]="'qty_' + i"
-                  required
-                  #qtyCtrl="ngModel"
-                  [class.field-invalid]="showInvalid(f, qtyCtrl)"
-                />
-                <app-field-error [control]="qtyCtrl" [submitted]="f.submitted" />
-              </label>
-              <button
-                type="button"
-                class="btn ghost sale-item-remove"
-                (click)="removeItem(i)"
-                [disabled]="items.length === 1"
-                aria-label="Quitar ítem"
-              >
-                Quitar
-              </button>
-            </div>
+      <section class="sale-catalog" [attr.aria-label]="'Productos de ' + (selectedBranch()?.name || 'la sucursal')">
+        <div class="sale-section-head">
+          <div>
+            <h3>Productos de {{ selectedBranch()?.name || 'la sucursal' }}</h3>
+            <p>
+              {{ availableProducts().length }}
+              {{ availableProducts().length === 1 ? 'producto asignado' : 'productos asignados' }}
+            </p>
+          </div>
+          @if (availableProducts().length > 4) {
+            <input
+              type="search"
+              placeholder="Filtrar productos…"
+              [ngModel]="catalogQuery()"
+              (ngModelChange)="catalogQuery.set($event)"
+              name="catalogQuery"
+            />
           }
         </div>
-      </div>
+
+        @if (!selectedBranchId()) {
+          <p class="sale-hint">Selecciona una sucursal para ver su inventario.</p>
+        } @else if (availableProducts().length === 0) {
+          <p class="sale-hint">
+            Esta sucursal no tiene productos asignados. Agrégalos en Productos e inventario.
+          </p>
+        } @else if (catalogProducts().length === 0) {
+          <p class="sale-hint">Ningún producto coincide con el filtro.</p>
+        } @else {
+          <ul class="product-catalog">
+            @for (p of catalogProducts(); track p.id) {
+              <li>
+                <button
+                  type="button"
+                  class="product-tile"
+                  [class.is-disabled]="!canAdd(p)"
+                  [disabled]="!canAdd(p)"
+                  (click)="addProduct(p)"
+                >
+                  <span class="product-tile-name">{{ p.name }}</span>
+                  @if (p.sku) {
+                    <span class="product-tile-sku">{{ p.sku }}</span>
+                  }
+                  <span class="product-tile-meta">
+                    <span>{{ formatMoney(p.unit_price) }}</span>
+                    <span class="stock-badge" [class.is-empty]="remainingStock(p) <= 0">
+                      {{ remainingStock(p) > 0 ? 'Stock ' + remainingStock(p) : 'Sin stock' }}
+                    </span>
+                  </span>
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <section class="sale-cart">
+        <div class="sale-section-head">
+          <h3>Venta</h3>
+          <p>
+            @if (items.length === 0) {
+              Toca un producto para agregarlo
+            } @else {
+              {{ items.length }} {{ items.length === 1 ? 'ítem' : 'ítems' }}
+            }
+          </p>
+        </div>
+
+        @if (items.length === 0) {
+          <p class="sale-hint">El carrito está vacío.</p>
+        } @else {
+          <ul class="sale-items-list">
+            @for (item of items; track item.product_id; let i = $index) {
+              <li class="sale-item-row">
+                <div class="sale-item-info">
+                  <strong>{{ productById(item.product_id)?.name || item.product_id }}</strong>
+                  <span>{{ formatMoney(unitPrice(productById(item.product_id))) }} c/u</span>
+                </div>
+                <div class="qty-stepper">
+                  <button type="button" class="qty-btn" (click)="stepQty(i, -1)" aria-label="Quitar uno">
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    min="1"
+                    [max]="maxQty(i)"
+                    [ngModel]="item.quantity"
+                    (ngModelChange)="setQty(i, $event)"
+                    [name]="'qty_' + i"
+                    required
+                    #qtyCtrl="ngModel"
+                    [class.field-invalid]="showInvalid(f, qtyCtrl) || qtyExceedsStock(i)"
+                    [attr.aria-label]="'Cantidad de ' + (productById(item.product_id)?.name || 'producto')"
+                  />
+                  <button
+                    type="button"
+                    class="qty-btn"
+                    (click)="stepQty(i, 1)"
+                    [disabled]="!canAdd(productById(item.product_id))"
+                    aria-label="Agregar uno"
+                  >
+                    +
+                  </button>
+                </div>
+                <div class="sale-item-side">
+                  <strong>{{ formatMoney(lineSubtotal(item)) }}</strong>
+                  <button type="button" class="btn ghost sale-item-remove" (click)="removeItem(i)">
+                    Quitar
+                  </button>
+                </div>
+                <app-field-error [control]="qtyCtrl" [submitted]="f.submitted" />
+              </li>
+            }
+          </ul>
+        }
+      </section>
 
       @if (formError) {
         <p class="error">{{ formError }}</p>
       }
     </form>
-    <div modalFooter class="actions modal-actions">
-      <button class="btn ghost" type="button" (click)="closeForm()">Cancelar</button>
-      <button class="btn" type="submit" form="sale-form">Registrar venta</button>
+    <div modalFooter class="sale-modal-footer">
+      <div class="sale-total">
+        <span>Total</span>
+        <strong>{{ formatMoney(draftTotal()) }}</strong>
+      </div>
+      <div class="actions modal-actions">
+        <button class="btn ghost" type="button" (click)="closeForm()">Cancelar</button>
+        <button class="btn" type="submit" form="sale-form" [disabled]="items.length === 0">
+          Registrar venta
+        </button>
+      </div>
     </div>
   </app-modal>
 </section>

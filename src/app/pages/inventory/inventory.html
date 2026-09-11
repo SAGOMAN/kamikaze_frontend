@@ -1,0 +1,672 @@
+<section class="page inventory-page">
+  <header class="page-header">
+    <div>
+      <h1>Inventario y egresos</h1>
+      <p>El stock se descuenta al comprar. La venta solo suma ingreso.</p>
+    </div>
+  </header>
+
+  <div class="inv-tabs" role="tablist" aria-label="Inventario y egresos">
+    <button
+      type="button"
+      role="tab"
+      class="inv-tab"
+      [class.active]="tab() === 'catalog'"
+      [attr.aria-selected]="tab() === 'catalog'"
+      (click)="setTab('catalog')"
+    >
+      Catálogo
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="inv-tab"
+      [class.active]="tab() === 'purchases'"
+      [attr.aria-selected]="tab() === 'purchases'"
+      (click)="setTab('purchases')"
+    >
+      Compras
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="inv-tab"
+      [class.active]="tab() === 'operational'"
+      [attr.aria-selected]="tab() === 'operational'"
+      (click)="setTab('operational')"
+    >
+      Gastos operativos
+    </button>
+  </div>
+
+  @if (listError) {
+    <p class="error">{{ listError }}</p>
+  }
+
+  @if (tab() === 'catalog') {
+    <div class="filters">
+      <input
+        type="search"
+        placeholder="Buscar producto…"
+        [(ngModel)]="productList.search"
+        name="productSearch"
+        (keyup.enter)="searchProducts()"
+      />
+      <button type="button" class="btn ghost" (click)="searchProducts()">Buscar</button>
+      <button type="button" class="btn" (click)="openCreateProduct()">Nuevo producto</button>
+    </div>
+
+    @if (hasLegacyStock()) {
+      <p class="inv-notice">
+        Hay stock actual sin compras asociadas (datos anteriores). Las nuevas entradas sí se
+        descontarán como gasto.
+      </p>
+    }
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>SKU</th>
+            <th>Precio venta</th>
+            <th>Último costo</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of products(); track item.id) {
+            <tr>
+              <td>{{ item.name }}</td>
+              <td>{{ item.sku || '—' }}</td>
+              <td>{{ formatMoney(item.unit_price) }}</td>
+              <td>{{ item.last_cost != null && item.last_cost !== '' ? formatMoney(item.last_cost) : '—' }}</td>
+              <td class="row-actions">
+                <button type="button" class="btn ghost" (click)="editProduct(item)">Editar</button>
+                <button type="button" class="btn danger" (click)="removeProduct(item.id)">Eliminar</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-list-pager [meta]="productList.meta()" (pageChange)="goToProductPage($event)" />
+
+    <div class="stock-section-head">
+      <h2 class="section-title">Stock por sucursal</h2>
+      <div class="filters">
+        <input
+          type="search"
+          placeholder="Filtrar productos en stock…"
+          [ngModel]="stockSearch()"
+          (ngModelChange)="stockSearch.set($event)"
+          name="stockSearch"
+        />
+      </div>
+    </div>
+
+    <div class="stock-branch-grid">
+      @for (card of branchStockCards(); track card.branch.id) {
+        <article class="panel stock-branch-card">
+          <header class="stock-branch-card-head">
+            <div>
+              <h3>{{ card.branch.name }}</h3>
+              <p>
+                {{ card.stocks.length }}
+                {{ card.stocks.length === 1 ? 'producto' : 'productos' }}
+              </p>
+            </div>
+            <button type="button" class="btn" (click)="openBuy(card.branch.id)">Comprar</button>
+          </header>
+
+          @if (card.stocks.length === 0) {
+            <p class="stock-branch-empty">Sin productos en esta sucursal. Registra una compra.</p>
+          } @else {
+            <ul class="stock-product-list">
+              @for (s of card.stocks; track s.id) {
+                <li class="stock-product-row">
+                  <div class="stock-product-info">
+                    <strong>{{ s.product?.name || s.product_id }}</strong>
+                    <span>{{ s.product?.sku || 'Sin SKU' }}</span>
+                  </div>
+                  <div class="stock-product-qty">
+                    <span class="stock-qty-label">Cantidad</span>
+                    <span class="stock-qty-value">{{ s.quantity }}</span>
+                  </div>
+                  <div class="stock-product-actions">
+                    <button type="button" class="btn" (click)="openBuy(s.branch_id, s.product_id)">
+                      Comprar
+                    </button>
+                    <button type="button" class="btn ghost" (click)="openAdjustStock(s)">Ajustar</button>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </article>
+      } @empty {
+        <p class="stock-branch-empty panel">
+          @if (stockSearch().trim()) {
+            No hay productos que coincidan con el filtro.
+          } @else {
+            No hay sucursales registradas.
+          }
+        </p>
+      }
+    </div>
+  }
+
+  @if (tab() === 'purchases') {
+    <div class="filters">
+      <input
+        type="search"
+        placeholder="Buscar compra…"
+        [(ngModel)]="purchaseList.search"
+        name="purchaseSearch"
+        (keyup.enter)="searchPurchases()"
+      />
+      <button type="button" class="btn ghost" (click)="searchPurchases()">Buscar</button>
+      <button type="button" class="btn" (click)="openBuy()">Registrar compra</button>
+    </div>
+
+    @if (purchases().length === 0) {
+      <div class="panel inv-empty">
+        <p>No hay compras de mercancía. Cada compra entra al stock y se resta como gasto.</p>
+        <button type="button" class="btn" (click)="openBuy()">Registrar la primera compra</button>
+      </div>
+    } @else {
+      <div class="table-wrap inv-desktop">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Producto</th>
+              <th>Sucursal</th>
+              <th>Cant.</th>
+              <th>Costo</th>
+              <th>Total</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of purchases(); track item.id) {
+              <tr>
+                <td>{{ item.expense_date | timestamp }}</td>
+                <td>{{ item.product?.name || item.description || 'Producto' }}</td>
+                <td>{{ item.branch?.name || '—' }}</td>
+                <td>{{ item.quantity ?? '—' }}</td>
+                <td>{{ formatMoney(item.unit_cost) }}</td>
+                <td class="inv-total-cell">{{ formatMoney(item.amount) }}</td>
+                <td class="row-actions">
+                  <button type="button" class="btn ghost" (click)="editPurchase(item)">Editar</button>
+                  <button type="button" class="btn danger" (click)="removePurchase(item.id)">Anular</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="inv-card-list">
+        @for (item of purchases(); track item.id) {
+          <li class="panel inv-card">
+            <div class="inv-card-top">
+              <div>
+                <strong>{{ formatMoney(item.amount) }}</strong>
+                <p>{{ item.expense_date | timestamp }}</p>
+              </div>
+              <span>{{ item.branch?.name || 'Sin sucursal' }}</span>
+            </div>
+            <p class="inv-card-meta">
+              {{ item.product?.name || item.description || 'Producto' }}
+              @if (item.quantity) {
+                · {{ item.quantity }} × {{ formatMoney(item.unit_cost) }}
+              }
+            </p>
+            <div class="inv-card-actions">
+              <button type="button" class="btn ghost" (click)="editPurchase(item)">Editar</button>
+              <button type="button" class="btn danger" (click)="removePurchase(item.id)">Anular</button>
+            </div>
+          </li>
+        }
+      </ul>
+
+      <app-list-pager [meta]="purchaseList.meta()" (pageChange)="goToPurchasePage($event)" />
+    }
+  }
+
+  @if (tab() === 'operational') {
+    <div class="filters">
+      <input
+        type="search"
+        placeholder="Buscar…"
+        [(ngModel)]="operationalList.search"
+        name="operationalSearch"
+        (keyup.enter)="searchOperational()"
+      />
+      <button type="button" class="btn ghost" (click)="searchOperational()">Buscar</button>
+      <button type="button" class="btn" (click)="openCreateOperational()">Registrar gasto</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Categoría</th>
+            <th>Monto</th>
+            <th>Sucursal</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of operational(); track item.id) {
+            <tr>
+              <td>{{ item.expense_date | timestamp }}</td>
+              <td>{{ item.category }}</td>
+              <td>{{ formatMoney(item.amount) }}</td>
+              <td>{{ item.branch?.name || 'General' }}</td>
+              <td class="row-actions">
+                <button type="button" class="btn ghost" (click)="editOperational(item)">Editar</button>
+                <button type="button" class="btn danger" (click)="removeOperational(item.id)">Eliminar</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-list-pager [meta]="operationalList.meta()" (pageChange)="goToOperationalPage($event)" />
+  }
+</section>
+
+<app-modal
+  [open]="formOpen()"
+  [title]="editingId ? 'Editar producto' : 'Nuevo producto'"
+  (closed)="closeProductForm()"
+>
+  <form #f="ngForm" id="product-form" class="form-grid" novalidate (ngSubmit)="saveProduct(f)">
+    <label>
+      Nombre
+      <input
+        [(ngModel)]="form.name"
+        name="name"
+        required
+        #nameCtrl="ngModel"
+        [class.field-invalid]="showInvalid(f, nameCtrl) || !!apiErrors['name']"
+      />
+      <app-field-error [control]="nameCtrl" [submitted]="f.submitted" [apiError]="apiErrors['name'] || ''" />
+    </label>
+    <label>
+      SKU
+      <input
+        [(ngModel)]="form.sku"
+        name="sku"
+        #skuCtrl="ngModel"
+        [class.field-invalid]="showInvalid(f, skuCtrl) || !!apiErrors['sku']"
+      />
+      <app-field-error [control]="skuCtrl" [submitted]="f.submitted" [apiError]="apiErrors['sku'] || ''" />
+    </label>
+    <label>
+      Precio de venta
+      <input
+        type="number"
+        step="0.01"
+        [(ngModel)]="form.unit_price"
+        name="unit_price"
+        required
+        #priceCtrl="ngModel"
+        [class.field-invalid]="showInvalid(f, priceCtrl) || !!apiErrors['unit_price']"
+      />
+      <app-field-error
+        [control]="priceCtrl"
+        [submitted]="f.submitted"
+        [apiError]="apiErrors['unit_price'] || ''"
+      />
+    </label>
+    <label class="checkbox">
+      <input type="checkbox" [(ngModel)]="form.is_active" name="is_active" />
+      Activo
+    </label>
+    @if (!editingId) {
+      <label class="checkbox full">
+        <input type="checkbox" [(ngModel)]="includeFirstPurchase" name="includeFirstPurchase" />
+        Registrar primera compra (entra al stock y se descuenta como gasto)
+      </label>
+      @if (includeFirstPurchase) {
+        <label>
+          Sucursal
+          <select
+            [(ngModel)]="firstPurchase.branch_id"
+            name="first_branch_id"
+            required
+            #firstBranchCtrl="ngModel"
+            [class.field-invalid]="showInvalid(f, firstBranchCtrl)"
+          >
+            <option [ngValue]="null" disabled>Selecciona</option>
+            @for (b of branches(); track b.id) {
+              <option [ngValue]="b.id">{{ b.name }}</option>
+            }
+          </select>
+          <app-field-error [control]="firstBranchCtrl" [submitted]="f.submitted" />
+        </label>
+        <label>
+          Cantidad
+          <input
+            type="number"
+            min="1"
+            [(ngModel)]="firstPurchase.quantity"
+            name="first_quantity"
+            required
+            #firstQtyCtrl="ngModel"
+          />
+          <app-field-error [control]="firstQtyCtrl" [submitted]="f.submitted" />
+        </label>
+        <label>
+          Costo unitario
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            [(ngModel)]="firstPurchase.unit_cost"
+            name="first_unit_cost"
+            required
+            #firstCostCtrl="ngModel"
+          />
+          <app-field-error [control]="firstCostCtrl" [submitted]="f.submitted" />
+        </label>
+        <label>
+          Fecha de compra
+          <input type="date" [(ngModel)]="firstPurchase.purchase_date" name="first_purchase_date" required />
+        </label>
+      }
+    }
+    @if (formError) {
+      <p class="error full">{{ formError }}</p>
+    }
+  </form>
+  <div modalFooter class="actions modal-actions">
+    <button class="btn ghost" type="button" (click)="closeProductForm()">Cancelar</button>
+    <button class="btn" type="submit" form="product-form">
+      {{ editingId ? 'Guardar cambios' : 'Crear' }}
+    </button>
+  </div>
+</app-modal>
+
+<app-modal
+  [open]="purchaseOpen()"
+  [title]="editingPurchaseId ? 'Editar compra' : 'Registrar compra'"
+  (closed)="closePurchase()"
+>
+  <form #pf="ngForm" id="purchase-form" class="form-grid" novalidate (ngSubmit)="savePurchase(pf)">
+    @if (editingPurchaseId) {
+      <p class="muted full">La cantidad y el costo no se pueden cambiar. Anula y vuelve a registrar si hace falta.</p>
+      <label>
+        Fecha
+        <input
+          type="date"
+          [(ngModel)]="purchaseEditForm.expense_date"
+          name="expense_date"
+          required
+          #pDateCtrl="ngModel"
+          [class.field-invalid]="showInvalid(pf, pDateCtrl) || !!purchaseApiErrors['expense_date']"
+        />
+        <app-field-error
+          [control]="pDateCtrl"
+          [submitted]="pf.submitted"
+          [apiError]="purchaseApiErrors['expense_date'] || ''"
+        />
+      </label>
+      <label class="full">
+        Notas
+        <textarea [(ngModel)]="purchaseEditForm.notes" name="notes" rows="2"></textarea>
+      </label>
+    } @else {
+      <label>
+        Sucursal
+        <select
+          [(ngModel)]="purchaseForm.branch_id"
+          name="branch_id"
+          required
+          #pBranchCtrl="ngModel"
+          [class.field-invalid]="showInvalid(pf, pBranchCtrl) || !!purchaseApiErrors['branch_id']"
+        >
+          <option [ngValue]="null" disabled>Selecciona</option>
+          @for (b of branches(); track b.id) {
+            <option [ngValue]="b.id">{{ b.name }}</option>
+          }
+        </select>
+        <app-field-error
+          [control]="pBranchCtrl"
+          [submitted]="pf.submitted"
+          [apiError]="purchaseApiErrors['branch_id'] || ''"
+        />
+      </label>
+      <label>
+        Producto
+        <select
+          [(ngModel)]="purchaseForm.product_id"
+          name="product_id"
+          required
+          (ngModelChange)="onPurchaseProductChange()"
+          #pProductCtrl="ngModel"
+          [class.field-invalid]="showInvalid(pf, pProductCtrl) || !!purchaseApiErrors['product_id']"
+        >
+          <option [ngValue]="null" disabled>Selecciona</option>
+          @for (p of catalog(); track p.id) {
+            <option [ngValue]="p.id">{{ p.name }}</option>
+          }
+        </select>
+        <app-field-error
+          [control]="pProductCtrl"
+          [submitted]="pf.submitted"
+          [apiError]="purchaseApiErrors['product_id'] || ''"
+        />
+      </label>
+      <label class="full">
+        Cantidad
+        <div class="qty-stepper">
+          <button type="button" class="qty-btn" (click)="stepPurchaseQty(-1)" aria-label="Quitar uno">−</button>
+          <input
+            type="number"
+            min="1"
+            [(ngModel)]="purchaseForm.quantity"
+            name="quantity"
+            required
+            #pQtyCtrl="ngModel"
+            [class.field-invalid]="showInvalid(pf, pQtyCtrl) || !!purchaseApiErrors['quantity']"
+          />
+          <button type="button" class="qty-btn" (click)="stepPurchaseQty(1)" aria-label="Agregar uno">+</button>
+        </div>
+        <app-field-error
+          [control]="pQtyCtrl"
+          [submitted]="pf.submitted"
+          [apiError]="purchaseApiErrors['quantity'] || ''"
+        />
+      </label>
+      <label>
+        Costo unitario
+        <input
+          type="number"
+          step="0.01"
+          min="0"
+          [(ngModel)]="purchaseForm.unit_cost"
+          name="unit_cost"
+          required
+          #pCostCtrl="ngModel"
+          [class.field-invalid]="showInvalid(pf, pCostCtrl) || !!purchaseApiErrors['unit_cost']"
+        />
+        <app-field-error
+          [control]="pCostCtrl"
+          [submitted]="pf.submitted"
+          [apiError]="purchaseApiErrors['unit_cost'] || ''"
+        />
+      </label>
+      <label>
+        Fecha
+        <input
+          type="date"
+          [(ngModel)]="purchaseForm.purchase_date"
+          name="purchase_date"
+          required
+          #pBuyDateCtrl="ngModel"
+          [class.field-invalid]="showInvalid(pf, pBuyDateCtrl) || !!purchaseApiErrors['purchase_date']"
+        />
+        <app-field-error
+          [control]="pBuyDateCtrl"
+          [submitted]="pf.submitted"
+          [apiError]="purchaseApiErrors['purchase_date'] || ''"
+        />
+      </label>
+      <label class="full">
+        Notas
+        <textarea [(ngModel)]="purchaseForm.notes" name="notes" rows="2"></textarea>
+      </label>
+      <p class="inv-live-total full">Total: <strong>{{ formatMoney(purchaseAmount()) }}</strong></p>
+    }
+    @if (purchaseError) {
+      <p class="error full">{{ purchaseError }}</p>
+    }
+  </form>
+  <div modalFooter class="actions modal-actions">
+    <button class="btn ghost" type="button" (click)="closePurchase()">Cancelar</button>
+    <button class="btn" type="submit" form="purchase-form">
+      {{ editingPurchaseId ? 'Guardar cambios' : 'Registrar compra' }}
+    </button>
+  </div>
+</app-modal>
+
+<app-modal [open]="stockOpen()" title="Ajustar stock" (closed)="closeStock()">
+  <p class="muted">Corrige merma o conteo. No genera gasto. Para entrar mercancía usa Comprar.</p>
+  <form #sf="ngForm" id="stock-form" class="form-grid" novalidate (ngSubmit)="saveStock(sf)">
+    <label>
+      Producto
+      <select [(ngModel)]="stockForm.product_id" name="product_id" required disabled>
+        @for (p of catalog(); track p.id) {
+          <option [ngValue]="p.id">{{ p.name }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      Sucursal
+      <select [(ngModel)]="stockForm.branch_id" name="branch_id" required disabled>
+        @for (b of branches(); track b.id) {
+          <option [ngValue]="b.id">{{ b.name }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      Cantidad
+      <input
+        type="number"
+        min="0"
+        [(ngModel)]="stockForm.quantity"
+        name="quantity"
+        required
+        #qtyCtrl="ngModel"
+        [class.field-invalid]="showInvalid(sf, qtyCtrl) || !!stockApiErrors['quantity']"
+      />
+      <app-field-error
+        [control]="qtyCtrl"
+        [submitted]="sf.submitted"
+        [apiError]="stockApiErrors['quantity'] || ''"
+      />
+    </label>
+    @if (stockFormError) {
+      <p class="error full">{{ stockFormError }}</p>
+    }
+  </form>
+  <div modalFooter class="actions modal-actions">
+    <button class="btn ghost" type="button" (click)="closeStock()">Cancelar</button>
+    <button class="btn" type="submit" form="stock-form">Ajustar</button>
+  </div>
+</app-modal>
+
+<app-modal
+  [open]="operationalOpen()"
+  [title]="editingOperationalId ? 'Editar gasto' : 'Registrar gasto'"
+  (closed)="closeOperational()"
+>
+  <form #of="ngForm" id="operational-form" class="form-grid" novalidate (ngSubmit)="saveOperational(of)">
+    <label>
+      Categoría
+      <select
+        [(ngModel)]="operationalForm.category"
+        name="category"
+        required
+        #categoryCtrl="ngModel"
+        [class.field-invalid]="showInvalid(of, categoryCtrl) || !!operationalApiErrors['category']"
+      >
+        <option [ngValue]="''" disabled>Selecciona</option>
+        @for (cat of expenseCategoryOptions(); track cat.id || cat.name) {
+          <option [ngValue]="cat.name">{{ cat.name }}</option>
+        }
+      </select>
+      <app-field-error
+        [control]="categoryCtrl"
+        [submitted]="of.submitted"
+        [apiError]="operationalApiErrors['category'] || ''"
+      />
+    </label>
+    <label>
+      Descripción
+      <input [(ngModel)]="operationalForm.description" name="description" />
+    </label>
+    <label>
+      Monto
+      <input
+        type="number"
+        step="0.01"
+        [(ngModel)]="operationalForm.amount"
+        name="amount"
+        required
+        #amountCtrl="ngModel"
+        [class.field-invalid]="showInvalid(of, amountCtrl) || !!operationalApiErrors['amount']"
+      />
+      <app-field-error
+        [control]="amountCtrl"
+        [submitted]="of.submitted"
+        [apiError]="operationalApiErrors['amount'] || ''"
+      />
+    </label>
+    <label>
+      Fecha
+      <input
+        type="date"
+        [(ngModel)]="operationalForm.expense_date"
+        name="expense_date"
+        required
+        #expenseDateCtrl="ngModel"
+        [class.field-invalid]="showInvalid(of, expenseDateCtrl) || !!operationalApiErrors['expense_date']"
+      />
+      <app-field-error
+        [control]="expenseDateCtrl"
+        [submitted]="of.submitted"
+        [apiError]="operationalApiErrors['expense_date'] || ''"
+      />
+    </label>
+    <label>
+      Sucursal (opcional)
+      <select [(ngModel)]="operationalForm.branch_id" name="branch_id">
+        <option [ngValue]="null">General</option>
+        @for (b of branches(); track b.id) {
+          <option [ngValue]="b.id">{{ b.name }}</option>
+        }
+      </select>
+    </label>
+    <label class="full">
+      Notas
+      <textarea [(ngModel)]="operationalForm.notes" name="notes" rows="2"></textarea>
+    </label>
+    @if (operationalError) {
+      <p class="error full">{{ operationalError }}</p>
+    }
+  </form>
+  <div modalFooter class="actions modal-actions">
+    <button class="btn ghost" type="button" (click)="closeOperational()">Cancelar</button>
+    <button class="btn" type="submit" form="operational-form">
+      {{ editingOperationalId ? 'Guardar cambios' : 'Registrar' }}
+    </button>
+  </div>
+</app-modal>
