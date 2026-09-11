@@ -9,6 +9,7 @@ import { ApiService } from '../../core/api/api.service';
 import { ListQueryState } from '../../core/list-query';
 import { Attendance, Branch, ClassSchedule, PaginatedResponse, Student } from '../../core/models';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
+import { localDateIso } from '../../shared/date/local-iso-date';
 import { parseApiError } from '../../shared/forms/parse-api-error';
 import { ListPager } from '../../shared/list-pager/list-pager';
 
@@ -110,8 +111,7 @@ export class AttendancePage implements OnInit, OnDestroy {
   }
 
   todayIso(): string {
-    const now = this.now();
-    return this.toIso(now.getFullYear(), now.getMonth() + 1, now.getDate());
+    return localDateIso(this.now());
   }
 
   todayValidRange(): { start: string; end: string } {
@@ -120,7 +120,7 @@ export class AttendancePage implements OnInit, OnDestroy {
     const next = new Date(y, m - 1, d + 1);
     return {
       start: today,
-      end: this.toIso(next.getFullYear(), next.getMonth() + 1, next.getDate()),
+      end: localDateIso(next),
     };
   }
 

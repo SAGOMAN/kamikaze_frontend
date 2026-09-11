@@ -4,6 +4,7 @@ import { ApiService } from '../../core/api/api.service';
 import { ListQueryState } from '../../core/list-query';
 import { Branch, Expense, PaginatedResponse } from '../../core/models';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
+import { localDateIso } from '../../shared/date/local-iso-date';
 import { TimestampPipe } from '../../shared/date/timestamp.pipe';
 import { FieldError } from '../../shared/forms/field-error';
 import { parseApiError } from '../../shared/forms/parse-api-error';
@@ -25,7 +26,7 @@ export class ExpensesPage implements OnInit {
     category: '',
     description: '',
     amount: 0,
-    expense_date: new Date().toISOString().slice(0, 10),
+    expense_date: localDateIso(),
     branch_id: null,
     notes: '',
   };
@@ -87,7 +88,7 @@ export class ExpensesPage implements OnInit {
       category: '',
       description: '',
       amount: 0,
-      expense_date: new Date().toISOString().slice(0, 10),
+      expense_date: localDateIso(),
       branch_id: null,
       notes: '',
     };

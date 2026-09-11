@@ -4,6 +4,7 @@ import { ApiService } from '../../core/api/api.service';
 import { ListQueryState } from '../../core/list-query';
 import { Branch, PaginatedResponse, Product, Sale } from '../../core/models';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
+import { localDateIso } from '../../shared/date/local-iso-date';
 import { TimestampPipe } from '../../shared/date/timestamp.pipe';
 import { FieldError } from '../../shared/forms/field-error';
 import { parseApiError } from '../../shared/forms/parse-api-error';
@@ -29,7 +30,7 @@ export class SalesPage implements OnInit {
   readonly formOpen = signal(false);
   readonly list = new ListQueryState();
   branchId: number | null = null;
-  saleDate = new Date().toISOString().slice(0, 10);
+  saleDate = localDateIso();
   notes = '';
   items: DraftItem[] = [{ product_id: null, quantity: 1 }];
   formError = '';
@@ -77,7 +78,7 @@ export class SalesPage implements OnInit {
   resetForm() {
     this.formError = '';
     this.apiErrors = {};
-    this.saleDate = new Date().toISOString().slice(0, 10);
+    this.saleDate = localDateIso();
     this.notes = '';
     this.items = [{ product_id: null, quantity: 1 }];
     this.branchId = this.branches()[0]?.id ?? null;

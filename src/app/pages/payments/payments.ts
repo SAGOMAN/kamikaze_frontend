@@ -4,6 +4,7 @@ import { ApiService } from '../../core/api/api.service';
 import { ListQueryState } from '../../core/list-query';
 import { MembershipPayment, PaginatedResponse, Student } from '../../core/models';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
+import { localDateIso, localYearMonth } from '../../shared/date/local-iso-date';
 import { TimestampPipe } from '../../shared/date/timestamp.pipe';
 import { FieldError } from '../../shared/forms/field-error';
 import { parseApiError } from '../../shared/forms/parse-api-error';
@@ -101,8 +102,8 @@ export class PaymentsPage implements OnInit {
   form: Partial<MembershipPayment> = {
     student_id: undefined,
     amount: 0,
-    payment_date: new Date().toISOString().slice(0, 10),
-    period_month: new Date().toISOString().slice(0, 7),
+    payment_date: localDateIso(),
+    period_month: localYearMonth(),
     payment_method: 'efectivo',
     notes: '',
   };
@@ -257,8 +258,8 @@ export class PaymentsPage implements OnInit {
     this.form = {
       student_id: undefined,
       amount: 0,
-      payment_date: new Date().toISOString().slice(0, 10),
-      period_month: new Date().toISOString().slice(0, 7),
+      payment_date: localDateIso(),
+      period_month: localYearMonth(),
       payment_method: 'efectivo',
       notes: '',
     };
