@@ -57,7 +57,6 @@ export class AttendancePage implements OnInit, OnDestroy {
       today: 'Hoy',
     },
     selectable: false,
-    validRange: () => this.todayValidRange(),
     dateClick: (info) => this.selectDate(info.dateStr),
     dayCellClassNames: (arg) => this.dayCellClasses(arg.date),
     dayCellDidMount: (arg) => this.decorateDayCell(arg),
@@ -112,16 +111,6 @@ export class AttendancePage implements OnInit, OnDestroy {
 
   todayIso(): string {
     return localDateIso(this.now());
-  }
-
-  todayValidRange(): { start: string; end: string } {
-    const today = this.todayIso();
-    const [y, m, d] = today.split('-').map(Number);
-    const next = new Date(y, m - 1, d + 1);
-    return {
-      start: today,
-      end: localDateIso(next),
-    };
   }
 
   toIso(y: number, m: number, d: number): string {
@@ -204,7 +193,11 @@ export class AttendancePage implements OnInit, OnDestroy {
   decorateDayCell(arg: DayCellMountArg) {
     const iso = this.toIso(arg.date.getFullYear(), arg.date.getMonth() + 1, arg.date.getDate());
     arg.el.querySelector('.fc-day-schedule-dot')?.remove();
-    if (iso !== this.todayIso()) return;
+    if (iso !== this.todayIso()) {
+      arg.el.setAttribute('aria-disabled', 'true');
+      return;
+    }
+    arg.el.removeAttribute('aria-disabled');
     const count = this.branchSchedules().filter((s) => s.day_of_week === arg.date.getDay()).length;
     if (!count) return;
     const mark = document.createElement('span');

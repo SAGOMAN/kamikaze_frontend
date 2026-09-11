@@ -195,14 +195,12 @@ describe('AttendancePage', () => {
     expect(component.dayCellClasses(new Date(2026, 6, 31))).not.toContain('has-schedule-day');
   });
 
-  it('configura FullCalendar en español limitado a hoy', () => {
+  it('configura FullCalendar en español con el mes visible y días no actuales no seleccionables', () => {
     expect(component.calendarOptions.initialView).toBe('dayGridMonth');
     expect(component.calendarOptions.locale).toBeTruthy();
     expect(component.calendarOptions.plugins?.length).toBeGreaterThan(0);
-    expect(component.todayValidRange()).toEqual({
-      start: '2026-07-30',
-      end: '2026-07-31',
-    });
+    expect(component.calendarOptions.validRange).toBeUndefined();
+    expect(component.dayCellClasses(new Date(2026, 6, 31))).toContain('is-unavailable-day');
   });
 
   it('limpia asistencias si no hay horario en curso', () => {

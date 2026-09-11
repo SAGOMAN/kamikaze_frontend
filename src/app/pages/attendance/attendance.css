@@ -163,12 +163,19 @@
 .attendance-calendar .fc .fc-day-disabled,
 .attendance-calendar .fc .is-unavailable-day {
   cursor: not-allowed;
-  opacity: 0.42;
+  background: var(--surface-muted);
 }
 
-.attendance-calendar .fc .fc-day-disabled:hover,
-.attendance-calendar .fc .is-unavailable-day:hover {
-  background: transparent;
+.attendance-calendar .fc .fc-day-disabled .fc-daygrid-day-number,
+.attendance-calendar .fc .is-unavailable-day .fc-daygrid-day-number {
+  color: var(--text-muted);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.attendance-calendar .fc .fc-daygrid-day.is-unavailable-day:hover,
+.attendance-calendar .fc .fc-day-disabled:hover {
+  background: var(--surface-muted);
 }
 
 .attendance-calendar .fc .fc-daygrid-day-frame {
