@@ -39,8 +39,8 @@
             <td>{{ item.address || '—' }}</td>
             <td>{{ item.is_active ? 'Activa' : 'Inactiva' }}</td>
             <td class="row-actions">
-              <button type="button" class="btn ghost" (click)="edit(item)">Editar</button>
-              <button type="button" class="btn danger" (click)="remove(item.id)">Eliminar</button>
+              <app-action-btn icon="edit" label="Editar" variant="ghost" (click)="edit(item)" />
+              <app-action-btn icon="delete" label="Eliminar" variant="danger" (click)="remove(item.id)" />
             </td>
           </tr>
         }

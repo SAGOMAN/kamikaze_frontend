@@ -1,59 +1,62 @@
 <section class="page">
-  <header class="page-header">
-    <div>
-      <h1>Catálogos</h1>
-      <p>Listas de valores para campos como la categoría de gastos.</p>
-    </div>
-    <div class="filters">
-      <input
-        type="search"
-        placeholder="Buscar catálogo…"
-        [(ngModel)]="list.search"
-        name="search"
-        (keyup.enter)="searchNow()"
-      />
-      <button type="button" class="btn ghost" (click)="searchNow()">Buscar</button>
-      <button type="button" class="btn" (click)="openCreateCatalog()">Nuevo catálogo</button>
-    </div>
-  </header>
+  @if (!isDetail()) {
+    <header class="page-header">
+      <div>
+        <h1>Catálogos</h1>
+        <p>Listas de valores para campos como la categoría de gastos.</p>
+      </div>
+      <div class="filters">
+        <input
+          type="search"
+          placeholder="Buscar catálogo…"
+          [(ngModel)]="list.search"
+          name="search"
+          (keyup.enter)="searchNow()"
+        />
+        <button type="button" class="btn ghost" (click)="searchNow()">Buscar</button>
+        <button type="button" class="btn" (click)="openCreateCatalog()">Nuevo catálogo</button>
+      </div>
+    </header>
 
-  @if (catalogError && !catalogFormOpen()) {
-    <p class="error">{{ catalogError }}</p>
-  }
+    @if (catalogError && !catalogFormOpen()) {
+      <p class="error">{{ catalogError }}</p>
+    }
 
-  <div class="catalogs-layout">
     <div class="table-wrap">
-      <table>
+      <table class="catalogs-table">
         <thead>
           <tr>
             <th>Catálogo</th>
-            <th>Código</th>
-            <th>Valores</th>
-            <th>Estado</th>
+            <th class="col-meta">Código</th>
+            <th class="col-meta">Descripción</th>
+            <th class="col-meta">Estado</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
           @for (item of catalogs(); track item.id) {
-            <tr
-              [class.is-selected]="selectedId() === item.id"
-              (click)="selectCatalog(item)"
-            >
-              <td>{{ item.name }}</td>
-              <td><code>{{ item.code }}</code></td>
-              <td>{{ item.items?.length ?? 0 }}</td>
-              <td>{{ item.is_active ? 'Activo' : 'Inactivo' }}</td>
+            <tr>
+              <td>
+                {{ item.name }}
+                <span class="catalog-mobile-meta">{{ item.code }}</span>
+              </td>
+              <td class="col-meta"><code>{{ item.code }}</code></td>
+              <td class="col-meta">{{ item.description || '—' }}</td>
+              <td class="col-meta">{{ item.is_active ? 'Activo' : 'Inactivo' }}</td>
               <td class="row-actions">
-                <button type="button" class="btn ghost" (click)="editCatalog(item); $event.stopPropagation()">
-                  Editar
-                </button>
-                <button
-                  type="button"
-                  class="btn danger"
-                  (click)="removeCatalog(item); $event.stopPropagation()"
-                >
-                  Eliminar
-                </button>
+                <app-action-btn
+                  icon="view"
+                  label="Ver registros"
+                  variant="ghost"
+                  (click)="viewRecords(item)"
+                />
+                <app-action-btn icon="edit" label="Editar" variant="ghost" (click)="editCatalog(item)" />
+                <app-action-btn
+                  icon="delete"
+                  label="Eliminar"
+                  variant="danger"
+                  (click)="removeCatalog(item)"
+                />
               </td>
             </tr>
           }
@@ -61,17 +64,31 @@
       </table>
     </div>
     <app-list-pager [meta]="list.meta()" (pageChange)="goToPage($event)" />
+  } @else {
+    <header class="page-header catalog-detail-header">
+      <div class="catalog-detail-title">
+        <app-action-btn icon="back" label="Regresar" variant="ghost" (click)="goBackToList()" />
+        <div>
+          <h1>{{ detailCatalog()?.name || 'Catálogo' }}</h1>
+          <p>{{ detailCatalog()?.description || 'Valores de este catálogo.' }}</p>
+        </div>
+      </div>
+      <div class="filters">
+        <app-action-btn
+          icon="create"
+          label="Nuevo valor"
+          variant="default"
+          (click)="openCreateItem()"
+        />
+      </div>
+    </header>
 
-    <section class="panel catalog-items">
-      @if (selectedCatalog(); as cat) {
-        <header class="catalog-items-head">
-          <div>
-            <h2>{{ cat.name }}</h2>
-            <p class="muted">{{ cat.description || 'Valores de este catálogo.' }}</p>
-          </div>
-          <button type="button" class="btn" (click)="openCreateItem()">Nuevo valor</button>
-        </header>
+    @if (catalogError) {
+      <p class="error">{{ catalogError }}</p>
+    }
 
+    @if (detailCatalog()) {
+      <section class="panel catalog-items">
         @if (items().length === 0) {
           <p class="muted">Aún no hay valores. Agrega el primero.</p>
         } @else {
@@ -83,18 +100,21 @@
                   <span>{{ item.code || 'Sin código' }} · {{ item.is_active ? 'Activo' : 'Inactivo' }}</span>
                 </div>
                 <div class="row-actions">
-                  <button type="button" class="btn ghost" (click)="editItem(item)">Editar</button>
-                  <button type="button" class="btn danger" (click)="removeItem(item)">Eliminar</button>
+                  <app-action-btn icon="edit" label="Editar" variant="ghost" (click)="editItem(item)" />
+                  <app-action-btn
+                    icon="delete"
+                    label="Eliminar"
+                    variant="danger"
+                    (click)="removeItem(item)"
+                  />
                 </div>
               </li>
             }
           </ul>
         }
-      } @else {
-        <p class="muted">Selecciona un catálogo para ver sus valores.</p>
-      }
-    </section>
-  </div>
+      </section>
+    }
+  }
 </section>
 
 <app-modal
@@ -194,7 +214,13 @@
     </label>
     <label>
       Orden
-      <input type="number" min="0" [(ngModel)]="itemForm.sort_order" name="sort_order" />
+      <input
+        type="number"
+        inputmode="numeric"
+        min="0"
+        [(ngModel)]="itemForm.sort_order"
+        name="sort_order"
+      />
     </label>
     <label class="checkbox">
       <input type="checkbox" [(ngModel)]="itemForm.is_active" name="is_active" />

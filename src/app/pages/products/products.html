@@ -34,8 +34,8 @@
             <td>{{ item.sku || '—' }}</td>
             <td>{{ item.unit_price }}</td>
             <td class="row-actions">
-              <button type="button" class="btn ghost" (click)="edit(item)">Editar</button>
-              <button type="button" class="btn danger" (click)="remove(item.id)">Eliminar</button>
+              <app-action-btn icon="edit" label="Editar" variant="ghost" (click)="edit(item)" />
+              <app-action-btn icon="delete" label="Eliminar" variant="danger" (click)="remove(item.id)" />
             </td>
           </tr>
         }
@@ -138,6 +138,7 @@
         Precio
         <input
           type="number"
+          inputmode="decimal"
           step="0.01"
           [(ngModel)]="form.unit_price"
           name="unit_price"
@@ -219,6 +220,7 @@
         Cantidad
         <input
           type="number"
+          inputmode="numeric"
           min="0"
           [(ngModel)]="stockForm.quantity"
           name="quantity"

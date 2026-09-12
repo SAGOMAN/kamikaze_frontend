@@ -30,6 +30,7 @@ export const routes: Routes = [
       { path: 'attendance', component: AttendancePage },
       { path: 'inventory', component: InventoryPage },
       { path: 'catalogs', component: CatalogsPage },
+      { path: 'catalogs/:id', component: CatalogsPage },
       { path: 'products', redirectTo: () => '/app/inventory?tab=catalog', pathMatch: 'full' },
       { path: 'expenses', redirectTo: () => '/app/inventory?tab=operational', pathMatch: 'full' },
       { path: 'sales', component: SalesPage },

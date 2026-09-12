@@ -25,6 +25,7 @@ import { forkJoin, Observable } from 'rxjs';
 import { ApiService } from '../../core/api/api.service';
 import { ListQueryState } from '../../core/list-query';
 import { Branch, ClassSchedule, Instructor, PaginatedResponse } from '../../core/models';
+import { ActionBtn } from '../../shared/action-btn/action-btn';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
 import { isNavCompact } from '../../shared/layout/breakpoints';
 import { FieldError } from '../../shared/forms/field-error';
@@ -51,7 +52,7 @@ interface InstructorDragSlot {
 
 @Component({
   selector: 'app-schedules',
-  imports: [FormsModule, Modal, ListPager, FullCalendarModule, FieldError],
+  imports: [FormsModule, Modal, ListPager, FullCalendarModule, FieldError, ActionBtn],
   templateUrl: './schedules.html',
   styleUrl: './schedules.css',
   encapsulation: ViewEncapsulation.None,

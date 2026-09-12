@@ -3,6 +3,7 @@ import { FormsModule, NgForm } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
 import { ListQueryState } from '../../core/list-query';
 import { PaginatedResponse, PlatformUser, UserRole } from '../../core/models';
+import { ActionBtn } from '../../shared/action-btn/action-btn';
 import { FieldError } from '../../shared/forms/field-error';
 import { parseApiError } from '../../shared/forms/parse-api-error';
 import { showInvalid } from '../../shared/forms/show-invalid';
@@ -21,7 +22,7 @@ interface UserForm {
 
 @Component({
   selector: 'app-users',
-  imports: [FormsModule, Modal, ListPager, FieldError, PasswordInput],
+  imports: [FormsModule, Modal, ListPager, FieldError, PasswordInput, ActionBtn],
   templateUrl: './users.html',
 })
 export class UsersPage implements OnInit {

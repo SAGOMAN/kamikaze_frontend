@@ -82,8 +82,13 @@
               <td>{{ formatMoney(item.unit_price) }}</td>
               <td>{{ item.last_cost != null && item.last_cost !== '' ? formatMoney(item.last_cost) : '—' }}</td>
               <td class="row-actions">
-                <button type="button" class="btn ghost" (click)="editProduct(item)">Editar</button>
-                <button type="button" class="btn danger" (click)="removeProduct(item.id)">Eliminar</button>
+                <app-action-btn icon="edit" label="Editar" variant="ghost" (click)="editProduct(item)" />
+                <app-action-btn
+                  icon="delete"
+                  label="Eliminar"
+                  variant="danger"
+                  (click)="removeProduct(item.id)"
+                />
               </td>
             </tr>
           }
@@ -199,8 +204,13 @@
                 <td>{{ formatMoney(item.unit_cost) }}</td>
                 <td class="inv-total-cell">{{ formatMoney(item.amount) }}</td>
                 <td class="row-actions">
-                  <button type="button" class="btn ghost" (click)="editPurchase(item)">Editar</button>
-                  <button type="button" class="btn danger" (click)="removePurchase(item.id)">Anular</button>
+                  <app-action-btn icon="edit" label="Editar" variant="ghost" (click)="editPurchase(item)" />
+                  <app-action-btn
+                    icon="delete"
+                    label="Anular"
+                    variant="danger"
+                    (click)="removePurchase(item.id)"
+                  />
                 </td>
               </tr>
             }
@@ -225,8 +235,13 @@
               }
             </p>
             <div class="inv-card-actions">
-              <button type="button" class="btn ghost" (click)="editPurchase(item)">Editar</button>
-              <button type="button" class="btn danger" (click)="removePurchase(item.id)">Anular</button>
+              <app-action-btn icon="edit" label="Editar" variant="ghost" (click)="editPurchase(item)" />
+              <app-action-btn
+                icon="delete"
+                label="Anular"
+                variant="danger"
+                (click)="removePurchase(item.id)"
+              />
             </div>
           </li>
         }
@@ -268,8 +283,13 @@
               <td>{{ formatMoney(item.amount) }}</td>
               <td>{{ item.branch?.name || 'General' }}</td>
               <td class="row-actions">
-                <button type="button" class="btn ghost" (click)="editOperational(item)">Editar</button>
-                <button type="button" class="btn danger" (click)="removeOperational(item.id)">Eliminar</button>
+                <app-action-btn icon="edit" label="Editar" variant="ghost" (click)="editOperational(item)" />
+                <app-action-btn
+                  icon="delete"
+                  label="Eliminar"
+                  variant="danger"
+                  (click)="removeOperational(item.id)"
+                />
               </td>
             </tr>
           }
@@ -312,6 +332,7 @@
       Precio de venta
       <input
         type="number"
+        inputmode="decimal"
         step="0.01"
         [(ngModel)]="form.unit_price"
         name="unit_price"
@@ -355,6 +376,7 @@
           Cantidad
           <input
             type="number"
+            inputmode="numeric"
             min="1"
             [(ngModel)]="firstPurchase.quantity"
             name="first_quantity"
@@ -367,6 +389,7 @@
           Costo unitario
           <input
             type="number"
+            inputmode="decimal"
             step="0.01"
             min="0"
             [(ngModel)]="firstPurchase.unit_cost"
@@ -470,6 +493,7 @@
           <button type="button" class="qty-btn" (click)="stepPurchaseQty(-1)" aria-label="Quitar uno">−</button>
           <input
             type="number"
+            inputmode="numeric"
             min="1"
             [(ngModel)]="purchaseForm.quantity"
             name="quantity"
@@ -489,6 +513,7 @@
         Costo unitario
         <input
           type="number"
+          inputmode="decimal"
           step="0.01"
           min="0"
           [(ngModel)]="purchaseForm.unit_cost"
@@ -560,6 +585,7 @@
       Cantidad
       <input
         type="number"
+        inputmode="numeric"
         min="0"
         [(ngModel)]="stockForm.quantity"
         name="quantity"
@@ -617,6 +643,7 @@
       Monto
       <input
         type="number"
+        inputmode="decimal"
         step="0.01"
         [(ngModel)]="operationalForm.amount"
         name="amount"

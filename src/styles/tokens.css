@@ -89,3 +89,15 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
+
+/**
+ * Móvil/táctil: desactiva el zoom por doble toque.
+ * El pellizco y el zoom del navegador siguen permitidos (sin user-scalable=no).
+ * `touch-action` no se hereda; se aplica a todos los nodos. Los chips de agenda
+ * conservan `touch-action: none` por mayor especificidad de clase.
+ */
+@media (pointer: coarse) {
+  * {
+    touch-action: manipulation;
+  }
+}

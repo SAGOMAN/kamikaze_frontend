@@ -3,6 +3,7 @@ import { FormsModule, NgForm } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
 import { ListQueryState } from '../../core/list-query';
 import { Branch, PaginatedResponse, Product, ProductStock } from '../../core/models';
+import { ActionBtn } from '../../shared/action-btn/action-btn';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
 import { FieldError } from '../../shared/forms/field-error';
 import { parseApiError } from '../../shared/forms/parse-api-error';
@@ -17,7 +18,7 @@ export interface BranchStockCard {
 
 @Component({
   selector: 'app-products',
-  imports: [FormsModule, Modal, ListPager, FieldError],
+  imports: [FormsModule, Modal, ListPager, FieldError, ActionBtn],
   templateUrl: './products.html',
   styleUrl: './products.css',
 })

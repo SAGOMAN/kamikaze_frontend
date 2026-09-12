@@ -3,6 +3,7 @@ import { FormsModule, NgForm } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
 import { ListQueryState } from '../../core/list-query';
 import { Instructor, PaginatedResponse } from '../../core/models';
+import { ActionBtn } from '../../shared/action-btn/action-btn';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
 import { FieldError } from '../../shared/forms/field-error';
 import { parseApiError } from '../../shared/forms/parse-api-error';
@@ -14,7 +15,7 @@ const DEFAULT_COLOR = '#64748B';
 
 @Component({
   selector: 'app-instructors',
-  imports: [FormsModule, Modal, ListPager, FieldError],
+  imports: [FormsModule, Modal, ListPager, FieldError, ActionBtn],
   templateUrl: './instructors.html',
 })
 export class InstructorsPage implements OnInit {

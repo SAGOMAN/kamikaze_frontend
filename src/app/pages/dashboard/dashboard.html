@@ -16,7 +16,7 @@
       </label>
       <label>
         Año
-        <input type="number" [(ngModel)]="year" name="year" />
+        <input type="number" inputmode="numeric" [(ngModel)]="year" name="year" />
       </label>
       <div class="period-extra" aria-live="polite">
         @if (period === 'month') {

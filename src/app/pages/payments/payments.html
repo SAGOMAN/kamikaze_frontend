@@ -98,10 +98,13 @@
                       <td>{{ item.payment_method || '—' }}</td>
                       <td>{{ item.notes || '—' }}</td>
                       <td class="row-actions">
-                        <button type="button" class="btn ghost" (click)="edit(item)">Editar</button>
-                        <button type="button" class="btn danger" (click)="remove(item.id)">
-                          Eliminar
-                        </button>
+                        <app-action-btn icon="edit" label="Editar" variant="ghost" (click)="edit(item)" />
+                        <app-action-btn
+                          icon="delete"
+                          label="Eliminar"
+                          variant="danger"
+                          (click)="remove(item.id)"
+                        />
                       </td>
                     </tr>
                   }
@@ -160,8 +163,8 @@
               <td>{{ item.payment_date | timestamp }}</td>
               <td>{{ item.notes || '—' }}</td>
               <td class="row-actions">
-                <button type="button" class="btn ghost" (click)="edit(item)">Editar</button>
-                <button type="button" class="btn danger" (click)="remove(item.id)">Eliminar</button>
+                <app-action-btn icon="edit" label="Editar" variant="ghost" (click)="edit(item)" />
+                <app-action-btn icon="delete" label="Eliminar" variant="danger" (click)="remove(item.id)" />
               </td>
             </tr>
           }
@@ -200,6 +203,7 @@
         Monto
         <input
           type="number"
+          inputmode="decimal"
           step="0.01"
           [(ngModel)]="form.amount"
           name="amount"
@@ -232,6 +236,8 @@
       <label>
         Período (YYYY-MM)
         <input
+          type="text"
+          inputmode="numeric"
           [(ngModel)]="form.period_month"
           name="period_month"
           placeholder="2026-07"
@@ -250,12 +256,18 @@
       </label>
       <label>
         Método
-        <input
+        <select
           [(ngModel)]="form.payment_method"
           name="payment_method"
+          required
           #methodCtrl="ngModel"
           [class.field-invalid]="showInvalid(f, methodCtrl) || !!apiErrors['payment_method']"
-        />
+        >
+          <option [ngValue]="''" disabled>Selecciona</option>
+          @for (method of paymentMethodOptions(); track method.id || method.name) {
+            <option [ngValue]="method.name">{{ method.name }}</option>
+          }
+        </select>
         <app-field-error
           [control]="methodCtrl"
           [submitted]="f.submitted"

@@ -60,7 +60,7 @@
         Inventario y egresos
       </a>
       <a routerLink="/app/sales" routerLinkActive="active">Ventas</a>
-      <a routerLink="/app/catalogs" routerLinkActive="active">Catálogos</a>
+      <a routerLink="/app/catalogs" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">Catálogos</a>
       <a routerLink="/app/instructors" routerLinkActive="active">Profesores</a>
       <a routerLink="/app/schedules" routerLinkActive="active">Horarios</a>
       @if (auth.isAdmin()) {

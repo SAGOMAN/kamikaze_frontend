@@ -2,7 +2,8 @@ import { Component, OnInit, computed, signal } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
 import { ListQueryState } from '../../core/list-query';
-import { MembershipPayment, PaginatedResponse, Student } from '../../core/models';
+import { Catalog, CatalogItem, MembershipPayment, PaginatedResponse, Student } from '../../core/models';
+import { ActionBtn } from '../../shared/action-btn/action-btn';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
 import { localDateIso, localYearMonth } from '../../shared/date/local-iso-date';
 import { TimestampPipe } from '../../shared/date/timestamp.pipe';
@@ -30,12 +31,13 @@ const MONTH_LABELS = [
 
 @Component({
   selector: 'app-payments',
-  imports: [FormsModule, Modal, TimestampPipe, ListPager, FieldError, SearchableSelect],
+  imports: [FormsModule, Modal, TimestampPipe, ListPager, FieldError, SearchableSelect, ActionBtn],
   templateUrl: './payments.html',
 })
 export class PaymentsPage implements OnInit {
   readonly items = signal<MembershipPayment[]>([]);
   readonly students = signal<Student[]>([]);
+  readonly paymentMethods = signal<CatalogItem[]>([]);
   readonly formOpen = signal(false);
   readonly list = new ListQueryState();
 
@@ -104,7 +106,7 @@ export class PaymentsPage implements OnInit {
     amount: 0,
     payment_date: localDateIso(),
     period_month: localYearMonth(),
-    payment_method: 'efectivo',
+    payment_method: '',
     notes: '',
   };
   editingId: number | null = null;
@@ -130,12 +132,38 @@ export class PaymentsPage implements OnInit {
       }
     });
     this.reload();
+    this.loadPaymentMethods();
   }
 
   /** Período YYYY-MM del mes calendario actual, en el año seleccionado. */
   private periodForCurrentMonth(): string {
     const month = String(new Date().getMonth() + 1).padStart(2, '0');
     return `${this.selectedYear()}-${month}`;
+  }
+
+  loadPaymentMethods() {
+    this.api.get<Catalog[]>('/catalogs', { code: 'payment_methods' }).subscribe((data) => {
+      const items = data[0]?.items ?? [];
+      this.paymentMethods.set(items.filter((item) => item.is_active));
+    });
+  }
+
+  paymentMethodOptions(): CatalogItem[] {
+    const items = this.paymentMethods();
+    const current = this.form.payment_method;
+    if (current && !items.some((item) => item.name === current)) {
+      return [
+        {
+          id: 0,
+          catalog_id: 0,
+          name: current,
+          is_active: true,
+          sort_order: 0,
+        },
+        ...items,
+      ];
+    }
+    return items;
   }
 
   reload() {
@@ -260,7 +288,7 @@ export class PaymentsPage implements OnInit {
       amount: 0,
       payment_date: localDateIso(),
       period_month: localYearMonth(),
-      payment_method: 'efectivo',
+      payment_method: '',
       notes: '',
     };
   }

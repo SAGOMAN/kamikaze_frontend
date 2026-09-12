@@ -1,8 +1,11 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule, NgForm } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../core/api/api.service';
 import { ListQueryState } from '../../core/list-query';
 import { Catalog, CatalogItem, PaginatedResponse } from '../../core/models';
+import { ActionBtn } from '../../shared/action-btn/action-btn';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
 import { FieldError } from '../../shared/forms/field-error';
 import { parseApiError } from '../../shared/forms/parse-api-error';
@@ -12,13 +15,14 @@ import { Modal } from '../../shared/modal/modal';
 
 @Component({
   selector: 'app-catalogs',
-  imports: [FormsModule, Modal, ListPager, FieldError],
+  imports: [FormsModule, Modal, ListPager, FieldError, ActionBtn],
   templateUrl: './catalogs.html',
   styleUrl: './catalogs.css',
 })
 export class CatalogsPage implements OnInit {
   readonly catalogs = signal<Catalog[]>([]);
   readonly items = signal<CatalogItem[]>([]);
+  readonly detailCatalog = signal<Catalog | null>(null);
   readonly selectedId = signal<number | null>(null);
   readonly catalogFormOpen = signal(false);
   readonly itemFormOpen = signal(false);
@@ -35,34 +39,65 @@ export class CatalogsPage implements OnInit {
   itemError = '';
   itemApiErrors: Record<string, string> = {};
 
-  readonly selectedCatalog = computed(
-    () => this.catalogs().find((c) => c.id === this.selectedId()) ?? null,
-  );
+  readonly isDetail = computed(() => this.selectedId() !== null);
+
+  private readonly destroyRef = inject(DestroyRef);
 
   constructor(
     private readonly api: ApiService,
     private readonly confirm: ConfirmService,
+    private readonly route: ActivatedRoute,
+    private readonly router: Router,
   ) {}
 
   ngOnInit() {
-    this.reload();
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      const raw = params.get('id');
+      if (!raw) {
+        this.selectedId.set(null);
+        this.detailCatalog.set(null);
+        this.items.set([]);
+        this.catalogError = '';
+        if (this.catalogs().length === 0) {
+          this.reload();
+        }
+        return;
+      }
+      const id = Number(raw);
+      if (!Number.isFinite(id) || id <= 0) {
+        this.goBackToList();
+        return;
+      }
+      this.selectedId.set(id);
+      const fromList = this.catalogs().find((c) => c.id === id);
+      if (fromList) {
+        this.detailCatalog.set(fromList);
+        this.items.set(fromList.items ?? []);
+      }
+      this.loadDetail(id);
+    });
   }
 
   reload() {
     this.api.get<PaginatedResponse<Catalog>>('/catalogs', this.list.params()).subscribe((res) => {
       this.list.apply(res, (data) => this.catalogs.set(data));
-      const selected = this.selectedId();
-      const still = this.catalogs().some((c) => c.id === selected);
-      if (!still) {
-        this.selectedId.set(this.catalogs()[0]?.id ?? null);
-      }
-      this.syncItems();
     });
   }
 
-  syncItems() {
-    const current = this.selectedCatalog();
-    this.items.set(current?.items ?? []);
+  loadDetail(id: number) {
+    this.catalogError = '';
+    this.api.get<Catalog>(`/catalogs/${id}`).subscribe({
+      next: (cat) => {
+        this.detailCatalog.set(cat);
+        this.items.set(cat.items ?? []);
+      },
+      error: (err) => {
+        this.detailCatalog.set(null);
+        this.items.set([]);
+        const parsed = parseApiError(err, 'No se pudo cargar el catálogo');
+        this.catalogError = parsed.message;
+      },
+    });
   }
 
   searchNow() {
@@ -73,9 +108,12 @@ export class CatalogsPage implements OnInit {
     this.list.goToPage(page, () => this.reload());
   }
 
-  selectCatalog(item: Catalog) {
-    this.selectedId.set(item.id);
-    this.syncItems();
+  viewRecords(item: Catalog) {
+    this.router.navigate(['/app/catalogs', item.id]);
+  }
+
+  goBackToList() {
+    this.router.navigate(['/app/catalogs']);
   }
 
   openCreateCatalog() {
@@ -108,9 +146,8 @@ export class CatalogsPage implements OnInit {
       ? this.api.put<Catalog>(`/catalogs/${this.editingCatalogId}`, this.catalogForm)
       : this.api.post<Catalog>('/catalogs', this.catalogForm);
     req.subscribe({
-      next: (saved) => {
+      next: () => {
         this.closeCatalogForm();
-        this.selectedId.set(saved.id);
         this.reload();
       },
       error: (err) => {
@@ -125,12 +162,7 @@ export class CatalogsPage implements OnInit {
     const ok = await this.confirm.ask(`¿Está seguro de que desea eliminar “${item.name}”?`);
     if (!ok) return;
     this.api.delete(`/catalogs/${item.id}`).subscribe({
-      next: () => {
-        if (this.selectedId() === item.id) {
-          this.selectedId.set(null);
-        }
-        this.reload();
-      },
+      next: () => this.reload(),
       error: (err) => {
         const parsed = parseApiError(err, 'No se pudo eliminar el catálogo');
         this.catalogError = parsed.message;
@@ -164,16 +196,17 @@ export class CatalogsPage implements OnInit {
   saveItem(f: NgForm) {
     this.itemError = '';
     this.itemApiErrors = {};
-    if (f.invalid || !this.selectedId()) {
+    const catalogId = this.selectedId();
+    if (f.invalid || !catalogId) {
       return;
     }
     const req = this.editingItemId
       ? this.api.put(`/catalog-items/${this.editingItemId}`, this.itemForm)
-      : this.api.post(`/catalogs/${this.selectedId()}/items`, this.itemForm);
+      : this.api.post(`/catalogs/${catalogId}/items`, this.itemForm);
     req.subscribe({
       next: () => {
         this.closeItemForm();
-        this.reload();
+        this.loadDetail(catalogId);
       },
       error: (err) => {
         const parsed = parseApiError(err, 'No se pudo guardar el valor');
@@ -184,8 +217,13 @@ export class CatalogsPage implements OnInit {
   }
 
   async removeItem(item: CatalogItem) {
+    const catalogId = this.selectedId();
     const ok = await this.confirm.ask(`¿Está seguro de que desea eliminar “${item.name}”?`);
     if (!ok) return;
-    this.api.delete(`/catalog-items/${item.id}`).subscribe(() => this.reload());
+    this.api.delete(`/catalog-items/${item.id}`).subscribe(() => {
+      if (catalogId) {
+        this.loadDetail(catalogId);
+      }
+    });
   }
 }

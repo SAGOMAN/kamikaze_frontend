@@ -36,10 +36,13 @@
             <td>{{ roleLabel(item.role) }}</td>
             <td>{{ item.is_active ? 'Activo' : 'Inactivo' }}</td>
             <td class="row-actions">
-              <button type="button" class="btn ghost" (click)="edit(item)">Editar</button>
-              <button type="button" class="btn ghost" (click)="openResetPassword(item)">
-                Contraseña
-              </button>
+              <app-action-btn icon="edit" label="Editar" variant="ghost" (click)="edit(item)" />
+              <app-action-btn
+                icon="password"
+                label="Contraseña"
+                variant="ghost"
+                (click)="openResetPassword(item)"
+              />
             </td>
           </tr>
         }

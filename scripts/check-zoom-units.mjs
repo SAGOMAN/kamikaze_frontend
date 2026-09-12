@@ -56,6 +56,13 @@ for (const file of walk(srcRoot)) {
       errors.push(`${rel}: el viewport no debe bloquear el zoom`);
     }
   }
+
+  if (rel === 'styles/tokens.css') {
+    const css = stripComments(raw, 'css');
+    if (!/@media\s*\(\s*pointer\s*:\s*coarse\s*\)[\s\S]*touch-action\s*:\s*manipulation/.test(css)) {
+      errors.push(`${rel}: falta touch-action: manipulation en táctil (doble toque)`);
+    }
+  }
 }
 
 if (errors.length) {
@@ -66,4 +73,4 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log('lint:zoom — media queries en em, JS sin innerWidth en px y viewport accesible.');
+console.log('lint:zoom — media queries en em, JS sin innerWidth en px, viewport accesible y doble toque táctil.');

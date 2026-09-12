@@ -216,6 +216,11 @@ th {
   display: flex;
   gap: 0.35rem;
   justify-content: flex-end;
+  align-items: center;
+}
+
+.row-actions app-action-btn {
+  flex: 0 0 auto;
 }
 
 .list-pager {
@@ -594,8 +599,8 @@ th {
     flex: 1 1 var(--filter-flex-min);
   }
 
-  .filters .btn,
-  .page-header > .btn {
+  .filters .btn:not(.action-btn),
+  .page-header > .btn:not(.action-btn) {
     width: 100%;
   }
 
@@ -671,11 +676,13 @@ th {
   }
 
   .row-actions {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
   }
 
   .row-actions .btn {
-    width: 100%;
+    width: auto;
   }
 }

@@ -59,7 +59,7 @@
               <td class="sale-items-cell">{{ itemsSummary(sale) }}</td>
               <td class="sale-total-cell">{{ formatMoney(sale.total) }}</td>
               <td class="row-actions">
-                <button type="button" class="btn danger" (click)="remove(sale.id)">Eliminar</button>
+                <app-action-btn icon="delete" label="Eliminar" variant="danger" (click)="remove(sale.id)" />
               </td>
             </tr>
           }
@@ -87,7 +87,7 @@
           @if (sale.notes) {
             <p class="sale-card-notes">{{ sale.notes }}</p>
           }
-          <button type="button" class="btn danger" (click)="remove(sale.id)">Eliminar</button>
+          <app-action-btn icon="delete" label="Eliminar" variant="danger" (click)="remove(sale.id)" />
         </li>
       }
     </ul>
@@ -238,6 +238,7 @@
                   </button>
                   <input
                     type="number"
+                    inputmode="numeric"
                     min="1"
                     [max]="maxQty(i)"
                     [ngModel]="item.quantity"

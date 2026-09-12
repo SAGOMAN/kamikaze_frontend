@@ -3,6 +3,7 @@ import { FormsModule, NgForm } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
 import { ListQueryState } from '../../core/list-query';
 import { Branch, PaginatedResponse, Product, Sale } from '../../core/models';
+import { ActionBtn } from '../../shared/action-btn/action-btn';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
 import { localDateIso } from '../../shared/date/local-iso-date';
 import { TimestampPipe } from '../../shared/date/timestamp.pipe';
@@ -19,7 +20,7 @@ interface DraftItem {
 
 @Component({
   selector: 'app-sales',
-  imports: [FormsModule, Modal, TimestampPipe, ListPager, FieldError],
+  imports: [FormsModule, Modal, TimestampPipe, ListPager, FieldError, ActionBtn],
   templateUrl: './sales.html',
   styleUrl: './sales.css',
 })

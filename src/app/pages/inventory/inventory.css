@@ -91,10 +91,12 @@
 .inv-card-actions {
   display: flex;
   gap: 0.5rem;
+  justify-content: flex-end;
+  align-items: center;
 }
 
 .inv-card-actions .btn {
-  flex: 1;
+  flex: 0 0 auto;
 }
 
 .inv-live-total {

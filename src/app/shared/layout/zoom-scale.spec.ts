@@ -19,4 +19,26 @@ describe('escala proporcional (rem)', () => {
     root.style.fontSize = previous;
     el.remove();
   });
+
+  it('declara touch-action: manipulation en puntero grueso para el doble toque', () => {
+    const rules: CSSRule[] = [];
+    for (const sheet of Array.from(document.styleSheets)) {
+      try {
+        rules.push(...Array.from(sheet.cssRules));
+      } catch {
+        // hojas de otro origen
+      }
+    }
+
+    const hasManipulation = rules.some(
+      (rule) =>
+        rule instanceof CSSMediaRule &&
+        /pointer\s*:\s*coarse/.test(rule.conditionText) &&
+        Array.from(rule.cssRules).some(
+          (inner) => inner instanceof CSSStyleRule && inner.style.touchAction === 'manipulation',
+        ),
+    );
+
+    expect(hasManipulation).toBeTrue();
+  });
 });

@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../core/api/api.service';
 import { ListQueryState } from '../../core/list-query';
 import { Branch, Catalog, CatalogItem, Expense, PaginatedResponse, Product, ProductStock } from '../../core/models';
+import { ActionBtn } from '../../shared/action-btn/action-btn';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
 import { localDateIso } from '../../shared/date/local-iso-date';
 import { TimestampPipe } from '../../shared/date/timestamp.pipe';
@@ -22,7 +23,7 @@ export interface BranchStockCard {
 
 @Component({
   selector: 'app-inventory',
-  imports: [FormsModule, Modal, TimestampPipe, ListPager, FieldError],
+  imports: [FormsModule, Modal, TimestampPipe, ListPager, FieldError, ActionBtn],
   templateUrl: './inventory.html',
   styleUrl: './inventory.css',
 })

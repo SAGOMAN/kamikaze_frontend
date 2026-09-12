@@ -3,6 +3,7 @@ import { FormsModule, NgForm } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
 import { ListQueryState } from '../../core/list-query';
 import { PaginatedResponse, Student } from '../../core/models';
+import { ActionBtn } from '../../shared/action-btn/action-btn';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
 import { FieldError } from '../../shared/forms/field-error';
 import { parseApiError } from '../../shared/forms/parse-api-error';
@@ -12,7 +13,7 @@ import { Modal } from '../../shared/modal/modal';
 
 @Component({
   selector: 'app-students',
-  imports: [FormsModule, Modal, ListPager, FieldError],
+  imports: [FormsModule, Modal, ListPager, FieldError, ActionBtn],
   templateUrl: './students.html',
 })
 export class StudentsPage implements OnInit {
