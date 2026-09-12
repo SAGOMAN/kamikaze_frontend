@@ -104,6 +104,49 @@
   font-size: 1rem;
 }
 
+.expense-desc {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.expense-desc-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  min-width: 0;
+}
+
+.expense-desc-text {
+  font-weight: 600;
+  min-width: 0;
+}
+
+.expense-desc-notes {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+  font-style: italic;
+  line-height: var(--line-body);
+}
+
+.expense-cat-pill {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 0.12rem 0.55rem;
+  border-radius: var(--radius-pill);
+  background: rgba(196, 92, 38, 0.12);
+  color: var(--accent);
+  font-size: var(--font-xs);
+  font-weight: 700;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
 .qty-stepper {
   display: inline-flex;
   align-items: stretch;

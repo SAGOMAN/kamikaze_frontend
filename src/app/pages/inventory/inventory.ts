@@ -6,6 +6,7 @@ import { ListQueryState } from '../../core/list-query';
 import { Branch, Catalog, CatalogItem, Expense, PaginatedResponse, Product, ProductStock } from '../../core/models';
 import { ActionBtn } from '../../shared/action-btn/action-btn';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
+import { CivilDatePipe } from '../../shared/date/civil-date.pipe';
 import { localDateIso } from '../../shared/date/local-iso-date';
 import { TimestampPipe } from '../../shared/date/timestamp.pipe';
 import { FieldError } from '../../shared/forms/field-error';
@@ -23,7 +24,7 @@ export interface BranchStockCard {
 
 @Component({
   selector: 'app-inventory',
-  imports: [FormsModule, Modal, TimestampPipe, ListPager, FieldError, ActionBtn],
+  imports: [FormsModule, Modal, TimestampPipe, CivilDatePipe, ListPager, FieldError, ActionBtn],
   templateUrl: './inventory.html',
   styleUrl: './inventory.css',
 })

@@ -48,6 +48,45 @@
           </label>
         }
       </div>
+      @if (showBranchFilter()) {
+        <label class="branch-multiselect" #branchMenu>
+          Sucursal
+          <div class="branch-multiselect-wrap">
+            <button
+              type="button"
+              class="branch-multiselect-toggle"
+              (click)="toggleBranchMenu($event)"
+              [attr.aria-expanded]="branchMenuOpen()"
+              aria-haspopup="listbox"
+            >
+              {{ branchFilterLabel() }}
+            </button>
+            @if (branchMenuOpen()) {
+              <div class="branch-multiselect-panel" role="listbox" aria-multiselectable="true">
+                <label class="checkbox branch-option">
+                  <input
+                    type="checkbox"
+                    [checked]="allBranchesSelected()"
+                    (change)="toggleAllBranches($event)"
+                  />
+                  Todas
+                </label>
+                @for (b of branches(); track b.id) {
+                  <label class="checkbox branch-option">
+                    <input
+                      type="checkbox"
+                      [checked]="isBranchSelected(b.id)"
+                      (change)="toggleBranch(b.id, $event)"
+                    />
+                    <span class="color-swatch" [style.background]="b.color || 'var(--border-strong)'"></span>
+                    {{ b.name }}
+                  </label>
+                }
+              </div>
+            }
+          </div>
+        </label>
+      }
       <button type="button" class="btn" (click)="load()">Actualizar</button>
       <button type="button" class="btn ghost" (click)="exportExcel()" [disabled]="exporting()">
         {{ exporting() ? 'Exportando…' : 'Exportar Excel' }}
@@ -60,7 +99,12 @@
   }
 
   @if (report(); as r) {
-    <p class="period-label muted">{{ r.label }} · {{ r.from }} — {{ r.to }}</p>
+    <p class="period-label muted">
+      {{ r.label }} · {{ r.from }} — {{ r.to }}
+      @if (r.sucursales_label) {
+        · {{ r.sucursales_label }}
+      }
+    </p>
 
     <div class="stats">
       <article class="stat-income">
@@ -92,6 +136,68 @@
         <p>{{ money(r.balance) }}</p>
       </article>
     </div>
+
+    @if (showBranchBreakdown() && r.by_branch?.length) {
+      <section class="breakdown" aria-label="Comparativo por sucursal">
+        <header class="breakdown-header">
+          <h2 class="section-title">Comparativo por sucursal</h2>
+          <p class="muted">Suma consolidada arriba; aquí el detalle de cada sucursal seleccionada.</p>
+        </header>
+
+        <div class="branch-bars" aria-hidden="true">
+          @for (row of r.by_branch; track row.id ?? row.name) {
+            <div class="branch-bar-block">
+              <p class="branch-bar-name">{{ row.name }}</p>
+              <div class="branch-bar-line">
+                <span class="branch-bar-label">Ingresos</span>
+                <div class="branch-bar-track">
+                  <span class="branch-bar income" [style.width.%]="incomeBarPct(row)"></span>
+                </div>
+                <span class="branch-bar-value">{{ money(row.income.total) }}</span>
+              </div>
+              <div class="branch-bar-line">
+                <span class="branch-bar-label">Gastos</span>
+                <div class="branch-bar-track">
+                  <span class="branch-bar expense" [style.width.%]="expenseBarPct(row)"></span>
+                </div>
+                <span class="branch-bar-value">{{ money(row.expenses.total) }}</span>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Sucursal</th>
+                <th>Mensualidades</th>
+                <th>Ventas</th>
+                <th>Ingresos</th>
+                <th>Mercancía</th>
+                <th>Operativos</th>
+                <th>Gastos</th>
+                <th>Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of r.by_branch; track row.id ?? row.name) {
+                <tr>
+                  <td>{{ row.name }}</td>
+                  <td>{{ money(row.income.membership_payments) }}</td>
+                  <td>{{ money(row.income.sales) }}</td>
+                  <td>{{ money(row.income.total) }}</td>
+                  <td>{{ money(row.expenses.merchandise) }}</td>
+                  <td>{{ money(row.expenses.operational) }}</td>
+                  <td>{{ money(row.expenses.total) }}</td>
+                  <td>{{ money(row.balance) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
 
     <section class="breakdown" aria-label="Desglose por mes">
       <header class="breakdown-header">

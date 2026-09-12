@@ -2,35 +2,22 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 
+export type ApiQueryValue = string | number | boolean | null | undefined | Array<string | number>;
+export type ApiQueryParams = Record<string, ApiQueryValue>;
+
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly base = environment.apiUrl;
 
   constructor(private readonly http: HttpClient) {}
 
-  get<T>(path: string, query?: Record<string, string | number | boolean | null | undefined>) {
-    let params = new HttpParams();
-    if (query) {
-      Object.entries(query).forEach(([key, value]) => {
-        if (value !== null && value !== undefined && value !== '') {
-          params = params.set(key, String(value));
-        }
-      });
-    }
-    return this.http.get<T>(`${this.base}${path}`, { params });
+  get<T>(path: string, query?: ApiQueryParams) {
+    return this.http.get<T>(`${this.base}${path}`, { params: this.toParams(query) });
   }
 
-  getBlob(path: string, query?: Record<string, string | number | boolean | null | undefined>) {
-    let params = new HttpParams();
-    if (query) {
-      Object.entries(query).forEach(([key, value]) => {
-        if (value !== null && value !== undefined && value !== '') {
-          params = params.set(key, String(value));
-        }
-      });
-    }
+  getBlob(path: string, query?: ApiQueryParams) {
     return this.http.get(`${this.base}${path}`, {
-      params,
+      params: this.toParams(query),
       responseType: 'blob',
       observe: 'response',
     });
@@ -46,5 +33,27 @@ export class ApiService {
 
   delete<T>(path: string) {
     return this.http.delete<T>(`${this.base}${path}`);
+  }
+
+  private toParams(query?: ApiQueryParams): HttpParams {
+    let params = new HttpParams();
+    if (!query) {
+      return params;
+    }
+
+    Object.entries(query).forEach(([key, value]) => {
+      if (value === null || value === undefined || value === '') {
+        return;
+      }
+      if (Array.isArray(value)) {
+        value.forEach((item) => {
+          params = params.append(`${key}[]`, String(item));
+        });
+        return;
+      }
+      params = params.set(key, String(value));
+    });
+
+    return params;
   }
 }

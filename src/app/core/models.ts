@@ -186,6 +186,18 @@ export interface PeriodReportMonth {
   balance: number;
 }
 
+export interface PeriodReportBranch {
+  id: number | null;
+  name: string;
+  income: {
+    membership_payments: number;
+    sales: number;
+    total: number;
+  };
+  expenses: { total: number; merchandise: number; operational: number };
+  balance: number;
+}
+
 export interface PeriodReport {
   period: ReportPeriodType;
   year: number;
@@ -195,6 +207,7 @@ export interface PeriodReport {
   from: string;
   to: string;
   label: string;
+  sucursales_label?: string;
   income: {
     membership_payments: number;
     sales: number;
@@ -203,6 +216,7 @@ export interface PeriodReport {
   expenses: { total: number; merchandise: number; operational: number };
   balance: number;
   months: PeriodReportMonth[];
+  by_branch: PeriodReportBranch[];
   tops: MonthlyReportTops | null;
 }
 
