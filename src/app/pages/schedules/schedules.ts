@@ -26,6 +26,7 @@ import { ApiService } from '../../core/api/api.service';
 import { ListQueryState } from '../../core/list-query';
 import { Branch, ClassSchedule, Instructor, PaginatedResponse } from '../../core/models';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
+import { isNavCompact } from '../../shared/layout/breakpoints';
 import { FieldError } from '../../shared/forms/field-error';
 import { parseApiError } from '../../shared/forms/parse-api-error';
 import { showInvalid } from '../../shared/forms/show-invalid';
@@ -309,7 +310,7 @@ export class SchedulesPage implements OnInit, OnDestroy {
     panel.style.width = `${rect.width}px`;
     panel.style.top = `${Math.max(16, rect.top)}px`;
     panel.style.maxHeight = `${Math.max(120, window.innerHeight - 32)}px`;
-    if (window.innerWidth <= 900) {
+    if (isNavCompact()) {
       slot.style.minHeight = `${panel.offsetHeight}px`;
     } else {
       slot.style.minHeight = '';
@@ -595,7 +596,7 @@ export class SchedulesPage implements OnInit, OnDestroy {
   }
 
   private isCompactCalendar(): boolean {
-    return window.innerWidth <= 900;
+    return isNavCompact();
   }
 
   private syncCalendarCompact() {

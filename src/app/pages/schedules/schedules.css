@@ -3,7 +3,7 @@
   gap: 0.25rem;
   padding: 0.2rem;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--surface-muted);
 }
 
@@ -31,8 +31,8 @@
 }
 
 .instructor-palette-slot {
-  flex: 0 0 220px;
-  width: 220px;
+  flex: 0 0 13.75rem;
+  width: 13.75rem;
   align-self: stretch;
 }
 
@@ -72,7 +72,7 @@
   gap: 0.55rem;
   padding: 0.5rem 0.6rem;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--surface-muted);
   cursor: grab;
   user-select: none;
@@ -110,9 +110,9 @@
   position: fixed;
   z-index: 10000;
   pointer-events: none;
-  transform: translate(10px, 12px);
+  transform: translate(0.625rem, 0.75rem);
   padding: 0.35rem 0.65rem;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 0.8rem;
   font-weight: 600;
   box-shadow: var(--shadow);
@@ -125,7 +125,7 @@
 .schedules-calendar.is-drop-target {
   outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
   outline-offset: -2px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 
 body.is-dragging-instructor,
@@ -223,7 +223,7 @@ body.is-dragging-instructor * {
   font-size: 0.75rem;
   color: var(--text-muted);
   padding: 0.15rem 0.45rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--surface);
   border: 1px solid var(--border);
 }
@@ -280,7 +280,7 @@ body.is-dragging-instructor * {
 }
 
 .schedules-calendar .fc .fc-event {
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   border: none;
   padding: 0.15rem 0.25rem;
   font-size: 0.78rem;
@@ -303,7 +303,7 @@ body.is-dragging-instructor * {
   height: 1.15rem;
   padding: 0;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--danger) 88%, #000);
   color: #fff;
   font-size: 0.85rem;
@@ -336,7 +336,7 @@ body.is-dragging-instructor * {
   background: var(--fc-highlight-color);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 56.25em) {
   .calendar-workspace {
     flex-direction: column;
   }

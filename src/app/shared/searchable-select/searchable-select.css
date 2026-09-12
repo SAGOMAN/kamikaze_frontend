@@ -29,7 +29,7 @@
   padding: 0;
   border: 1px solid var(--border-strong);
   border-left: none;
-  border-radius: 0 8px 8px 0;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
   background: var(--surface);
   color: var(--text-soft);
   cursor: pointer;
@@ -63,14 +63,14 @@
   max-height: 14rem;
   overflow: auto;
   border: 1px solid var(--border-strong);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--surface);
   box-shadow: var(--shadow);
 }
 
 .searchable-select-list li {
   padding: 0.5rem 0.65rem;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   cursor: pointer;
   color: var(--text);
 }

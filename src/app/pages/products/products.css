@@ -65,7 +65,7 @@
   align-items: center;
   padding: 0.7rem 0.75rem;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--surface-muted);
 }
 
@@ -109,7 +109,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-@media (max-width: 520px) {
+@media (max-width: 32.5em) {
   .stock-product-row {
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:

@@ -1,6 +1,6 @@
 .shell {
   display: grid;
-  grid-template-columns: 240px 1fr;
+  grid-template-columns: var(--sidebar-width) 1fr;
   min-height: 100vh;
   background: var(--bg);
   color: var(--text);
@@ -42,11 +42,11 @@
 }
 
 .brand-mark {
-  width: 42px;
-  height: 42px;
+  width: var(--brand-mark);
+  height: var(--brand-mark);
   display: grid;
   place-items: center;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--accent);
   color: var(--accent-contrast);
   font-weight: 700;
@@ -76,7 +76,7 @@ nav a {
   color: var(--text-soft);
   text-decoration: none;
   padding: 0.55rem 0.75rem;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 0.92rem;
 }
 
@@ -112,7 +112,7 @@ nav a.active {
   min-width: 0;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 56.25em) {
   .shell {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr;
@@ -128,7 +128,7 @@ nav a.active {
     padding: 0.7rem 0.9rem;
     background: var(--surface);
     border-bottom: 1px solid var(--border);
-    box-shadow: 0 4px 16px rgba(26, 36, 48, 0.06);
+    box-shadow: var(--shadow-topbar);
   }
 
   .topbar-brand small {
@@ -136,8 +136,8 @@ nav a.active {
   }
 
   .topbar-brand .brand-mark {
-    width: 36px;
-    height: 36px;
+    width: var(--brand-mark-sm);
+    height: var(--brand-mark-sm);
     font-size: 0.85rem;
   }
 
@@ -149,7 +149,7 @@ nav a.active {
     justify-content: center;
     flex-shrink: 0;
     border: 1px solid var(--border-strong);
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     background: var(--surface-muted);
     cursor: pointer;
     padding: 0;
@@ -178,11 +178,11 @@ nav a.active {
   }
 
   .menu-toggle-bars::before {
-    top: -6px;
+    top: -0.375rem;
   }
 
   .menu-toggle-bars::after {
-    top: 6px;
+    top: 0.375rem;
   }
 
   .shell.menu-open .menu-toggle-bars {
@@ -222,12 +222,12 @@ nav a.active {
     left: 0;
     bottom: 0;
     z-index: 60;
-    width: min(288px, 86vw);
+    width: var(--drawer-width);
     padding-top: 1rem;
     transform: translateX(-105%);
     transition: transform 0.25s ease;
     border-right: 1px solid var(--border);
-    box-shadow: 8px 0 32px rgba(26, 36, 48, 0.12);
+    box-shadow: var(--shadow-drawer);
     overflow-y: auto;
   }
 
@@ -242,7 +242,7 @@ nav a.active {
     height: 2rem;
     flex-shrink: 0;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     background: transparent;
     color: var(--text-muted);
     font-size: 1.5rem;
@@ -260,7 +260,7 @@ nav a.active {
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 30em) {
   .content {
     padding: 0.85rem;
   }

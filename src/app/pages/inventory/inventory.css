@@ -4,7 +4,7 @@
   flex-wrap: wrap;
   padding: 0.25rem;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: var(--surface-muted);
 }
 
@@ -14,7 +14,7 @@
   background: transparent;
   color: var(--text-muted);
   padding: 0.55rem 0.9rem;
-  border-radius: 9px;
+  border-radius: 0.5625rem;
   font: inherit;
   font-weight: 600;
   font-size: 0.9rem;
@@ -36,7 +36,7 @@
 
 .inv-notice {
   padding: 0.75rem 0.9rem;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   background: var(--surface-muted);
 }
@@ -120,11 +120,11 @@
 }
 
 .qty-btn:first-child {
-  border-radius: 8px 0 0 8px;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
 }
 
 .qty-btn:last-child {
-  border-radius: 0 8px 8px 0;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
 }
 
 .qty-stepper input {
@@ -203,7 +203,7 @@
   align-items: center;
   padding: 0.7rem 0.75rem;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--surface-muted);
 }
 
@@ -254,7 +254,7 @@
   justify-content: flex-end;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 45em) {
   .inv-desktop {
     display: none;
   }

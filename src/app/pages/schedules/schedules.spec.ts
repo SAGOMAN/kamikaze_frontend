@@ -119,7 +119,16 @@ describe('SchedulesPage', () => {
   });
 
   it('en viewport compacto usa nombres cortos de los días', () => {
-    spyOnProperty(window, 'innerWidth', 'get').and.returnValue(390);
+    spyOn(window, 'matchMedia').and.callFake((query: string) => ({
+      matches: query.includes('56.25em'),
+      media: query,
+      onchange: null,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      dispatchEvent: () => false,
+    }));
     const options = component['buildCalendarOptions'](1, []);
     expect(options.dayHeaderFormat).toEqual({ weekday: 'short' });
   });

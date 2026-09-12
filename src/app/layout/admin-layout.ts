@@ -8,6 +8,7 @@ import { FieldError } from '../shared/forms/field-error';
 import { parseApiError } from '../shared/forms/parse-api-error';
 import { showInvalid } from '../shared/forms/show-invalid';
 import { Modal } from '../shared/modal/modal';
+import { MEDIA } from '../shared/layout/breakpoints';
 import { PasswordInput } from '../shared/password-input/password-input';
 
 @Component({
@@ -43,7 +44,7 @@ export class AdminLayout implements OnInit {
   }
 
   ngOnInit() {
-    this.mediaQuery = window.matchMedia('(max-width: 900px)');
+    this.mediaQuery = window.matchMedia(MEDIA.maxNav);
     this.syncViewport(this.mediaQuery.matches);
 
     const onChange = (event: MediaQueryListEvent) => this.syncViewport(event.matches);

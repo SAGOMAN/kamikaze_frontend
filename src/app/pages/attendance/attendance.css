@@ -1,6 +1,6 @@
 .attendance-layout {
   display: grid;
-  grid-template-columns: minmax(280px, 1.05fr) minmax(280px, 1fr);
+  grid-template-columns: minmax(17.5rem, 1.05fr) minmax(17.5rem, 1fr);
   gap: 1.25rem;
   align-items: start;
 }
@@ -60,7 +60,7 @@
 .legend-dot {
   width: 0.55rem;
   height: 0.55rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
 }
@@ -104,7 +104,7 @@
 .branch-select-wrap .color-swatch {
   width: 1.15rem;
   height: 1.15rem;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
 }
 
 .branch-select-wrap select {
@@ -119,11 +119,11 @@
   color: var(--text);
   background: var(--branch-color, var(--surface-muted));
   padding: 0.35rem 0.75rem;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 
 .attendance-calendar .fc .fc-button {
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   text-transform: capitalize;
   box-shadow: none;
   padding: 0.35rem 0.7rem;
@@ -189,7 +189,7 @@
   bottom: 0.45rem;
   width: 0.45rem;
   height: 0.45rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--accent);
   transform: translateX(-50%);
 }
@@ -204,7 +204,7 @@
   color: var(--accent);
 }
 
-@media (max-width: 960px) {
+@media (max-width: 60em) {
   .attendance-layout {
     grid-template-columns: 1fr;
   }

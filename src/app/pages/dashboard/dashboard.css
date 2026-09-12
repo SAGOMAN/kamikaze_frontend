@@ -21,9 +21,9 @@
   width: 100%;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 56.25em) {
   .period-extra {
-    flex: 1 1 140px;
+    flex: 1 1 var(--filter-flex-min);
     width: auto;
   }
 }
@@ -98,7 +98,7 @@
 
 .top-card {
   padding: 1rem;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   border: 1px solid var(--border);
   background: var(--surface);
   box-shadow: var(--shadow);
@@ -139,7 +139,7 @@
   justify-content: center;
   width: 1.5rem;
   height: 1.5rem;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   background: var(--surface-muted);
   color: var(--text-muted);
   font-size: 0.78rem;
@@ -179,7 +179,7 @@
   margin: 0;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 56.25em) {
   .tops-grid {
     grid-template-columns: 1fr;
   }
