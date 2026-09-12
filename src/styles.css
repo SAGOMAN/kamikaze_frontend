@@ -297,6 +297,36 @@ th {
   font-size: 0.9rem;
 }
 
+/* Mensualidades: pestañas */
+.pay-tabs {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  padding: 0.25rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--surface-muted);
+}
+
+.pay-tab {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  padding: 0.55rem 0.9rem;
+  border-radius: 0.5625rem;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.pay-tab.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
 /* Mensualidades: franja anual */
 .payments-year-panel {
   display: flex;
@@ -307,13 +337,8 @@ th {
 .payments-year-toolbar {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
   gap: 0.85rem;
   align-items: end;
-}
-
-.payments-year-toolbar .section-title {
-  margin: 0;
 }
 
 .filters .student-picker {
@@ -419,14 +444,6 @@ th {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-}
-
-.payments-history .page-header {
-  align-items: end;
-}
-
-.payments-history .section-title {
-  margin: 0;
 }
 
 .error {

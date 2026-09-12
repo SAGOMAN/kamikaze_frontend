@@ -2,13 +2,45 @@
   <header class="page-header">
     <div>
       <h1>Mensualidades</h1>
-      <p>Cobro por alumno con vista anual, e historial global de pagos.</p>
+      <p>Cobro por alumno e historial global de pagos.</p>
     </div>
   </header>
 
-  <section class="panel payments-year-panel">
+  <div class="pay-tabs" role="tablist" aria-label="Mensualidades">
+    <button
+      type="button"
+      role="tab"
+      class="pay-tab"
+      id="payments-tab-student"
+      [class.active]="tab() === 'student'"
+      [attr.aria-selected]="tab() === 'student'"
+      aria-controls="payments-panel-student"
+      (click)="setTab('student')"
+    >
+      Alumno
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="pay-tab"
+      id="payments-tab-global"
+      [class.active]="tab() === 'global'"
+      [attr.aria-selected]="tab() === 'global'"
+      aria-controls="payments-panel-global"
+      (click)="setTab('global')"
+    >
+      Global
+    </button>
+  </div>
+
+  @if (tab() === 'student') {
+  <section
+    class="panel payments-year-panel"
+    role="tabpanel"
+    id="payments-panel-student"
+    aria-labelledby="payments-tab-student"
+  >
     <div class="payments-year-toolbar">
-      <h2 class="section-title">Cobro por alumno</h2>
       <div class="filters">
         <label class="student-picker">
           Alumno
@@ -116,25 +148,26 @@
       }
     }
   </section>
+  }
 
-  <section class="payments-history">
-    <header class="page-header">
-      <div>
-        <h2 class="section-title">Historial global</h2>
-        <p class="muted">Todos los pagos registrados, con búsqueda y paginación.</p>
-      </div>
-      <div class="filters">
-        <input
-          type="search"
-          placeholder="Buscar alumno, período…"
-          [(ngModel)]="list.search"
-          name="search"
-          (keyup.enter)="searchNow()"
-        />
-        <button type="button" class="btn ghost" (click)="searchNow()">Buscar</button>
-        <button type="button" class="btn" (click)="openCreate()">Registrar pago</button>
-      </div>
-    </header>
+  @if (tab() === 'global') {
+  <section
+    class="payments-history"
+    role="tabpanel"
+    id="payments-panel-global"
+    aria-labelledby="payments-tab-global"
+  >
+    <div class="filters">
+      <input
+        type="search"
+        placeholder="Buscar alumno, período…"
+        [(ngModel)]="list.search"
+        name="search"
+        (keyup.enter)="searchNow()"
+      />
+      <button type="button" class="btn ghost" (click)="searchNow()">Buscar</button>
+      <button type="button" class="btn" (click)="openCreate()">Registrar pago</button>
+    </div>
 
     <div class="table-wrap">
       <table>
@@ -174,6 +207,7 @@
 
     <app-list-pager [meta]="list.meta()" (pageChange)="goToPage($event)" />
   </section>
+  }
 
   <app-modal
     [open]="formOpen()"

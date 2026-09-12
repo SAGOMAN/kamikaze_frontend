@@ -14,6 +14,8 @@ import { ListPager } from '../../shared/list-pager/list-pager';
 import { Modal } from '../../shared/modal/modal';
 import { SearchableSelect } from '../../shared/searchable-select/searchable-select';
 
+export type PaymentsTab = 'student' | 'global';
+
 const MONTH_LABELS = [
   'Ene',
   'Feb',
@@ -35,6 +37,7 @@ const MONTH_LABELS = [
   templateUrl: './payments.html',
 })
 export class PaymentsPage implements OnInit {
+  readonly tab = signal<PaymentsTab>('student');
   readonly items = signal<MembershipPayment[]>([]);
   readonly students = signal<Student[]>([]);
   readonly paymentMethods = signal<CatalogItem[]>([]);
@@ -146,6 +149,10 @@ export class PaymentsPage implements OnInit {
       const items = data[0]?.items ?? [];
       this.paymentMethods.set(items.filter((item) => item.is_active));
     });
+  }
+
+  setTab(tab: PaymentsTab) {
+    this.tab.set(tab);
   }
 
   paymentMethodOptions(): CatalogItem[] {
