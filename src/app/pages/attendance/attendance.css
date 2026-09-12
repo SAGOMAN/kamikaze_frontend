@@ -1,12 +1,142 @@
 .attendance-layout {
-  display: grid;
-  grid-template-columns: minmax(17.5rem, 1.05fr) minmax(17.5rem, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 1.25rem;
-  align-items: start;
+  min-width: 0;
+  max-width: 100%;
 }
 
-.attendance-calendar {
-  padding: 1rem 1rem 0.75rem;
+.attendance-week {
+  padding: 1rem 1rem 0.85rem;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.week-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
+  width: 100%;
+  max-width: 100%;
+}
+
+.week-title {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1.1rem;
+  font-family: Georgia, 'Times New Roman', serif;
+  color: var(--text);
+  background: var(--branch-color, var(--surface-muted));
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-md);
+}
+
+.week-chips {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.45rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.week-chip {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+  padding: 0.5rem 0.25rem 0.7rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-muted);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+}
+
+.week-chip:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+}
+
+.week-chip.is-today {
+  box-shadow: inset 0 0 0 2px var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+}
+
+.week-chip.is-selected {
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
+  border-color: var(--accent);
+}
+
+.week-chip.is-future {
+  opacity: 0.78;
+}
+
+.week-chip-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.week-chip-day {
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.week-chip.is-today .week-chip-day,
+.week-chip.is-selected .week-chip-day {
+  color: var(--accent);
+}
+
+.week-chip-dot {
+  position: absolute;
+  bottom: 0.3rem;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+}
+
+.week-calendar-btn {
+  display: inline-flex;
+  flex-direction: row;
+  flex-shrink: 0;
+  gap: 0.35rem;
+  min-width: auto;
+  padding: 0.45rem 0.7rem;
+}
+
+.week-calendar-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.week-calendar-text {
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.week-legend {
+  margin: 0.75rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
 }
 
 .attendance-detail {
@@ -22,6 +152,10 @@
   gap: 1rem;
 }
 
+.attendance-day-card > .btn {
+  align-self: flex-start;
+}
+
 .attendance-day-meta h2 {
   margin: 0;
   font-size: 1.15rem;
@@ -35,6 +169,11 @@
   font-size: 0.9rem;
 }
 
+.attendance-correcting {
+  color: var(--accent) !important;
+  font-weight: 600;
+}
+
 .schedule-field {
   display: flex;
   flex-direction: column;
@@ -43,50 +182,29 @@
   color: var(--text-soft);
 }
 
+.attendance-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-muted));
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+}
+
+.attendance-cta-label {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.attendance-cta-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
 .attendance-empty p {
   margin: 0;
   color: var(--text-muted);
-}
-
-.calendar-legend {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  margin: 0.85rem 0 0;
-  color: var(--text-muted);
-  font-size: 0.8rem;
-}
-
-.legend-dot {
-  width: 0.55rem;
-  height: 0.55rem;
-  border-radius: var(--radius-pill);
-  background: var(--accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
-}
-
-/* FullCalendar — tema alineado al producto */
-.attendance-calendar {
-  --fc-border-color: var(--border);
-  --fc-page-bg-color: transparent;
-  --fc-neutral-bg-color: var(--surface-muted);
-  --fc-today-bg-color: color-mix(in srgb, var(--accent) 12%, transparent);
-  --fc-button-bg-color: var(--accent);
-  --fc-button-border-color: var(--accent);
-  --fc-button-hover-bg-color: var(--accent-soft);
-  --fc-button-hover-border-color: var(--accent-soft);
-  --fc-button-active-bg-color: var(--accent);
-  --fc-button-active-border-color: var(--accent);
-  --fc-button-text-color: var(--accent-contrast);
-}
-
-.attendance-calendar .fc {
-  font-size: 0.92rem;
-}
-
-.attendance-calendar .fc .fc-toolbar {
-  gap: 0.5rem;
-  margin-bottom: 0.85rem;
 }
 
 .branch-field {
@@ -112,100 +230,103 @@
   min-width: 12rem;
 }
 
-.attendance-calendar .fc .fc-toolbar-title {
-  font-size: 1.1rem;
-  font-family: Georgia, 'Times New Roman', serif;
-  text-transform: capitalize;
-  color: var(--text);
-  background: var(--branch-color, var(--surface-muted));
-  padding: 0.35rem 0.75rem;
-  border-radius: var(--radius-md);
-}
-
-.attendance-calendar .fc .fc-button {
-  border-radius: var(--radius-md);
-  text-transform: capitalize;
-  box-shadow: none;
-  padding: 0.35rem 0.7rem;
-}
-
-.attendance-calendar .fc .fc-button-primary:not(:disabled).fc-button-active,
-.attendance-calendar .fc .fc-button-primary:not(:disabled):active {
-  background: var(--accent);
-  border-color: var(--accent);
-}
-
-.attendance-calendar .fc .fc-col-header-cell {
-  background: var(--surface-muted);
-}
-
-.attendance-calendar .fc .fc-col-header-cell-cushion,
-.attendance-calendar .fc .fc-daygrid-day-number {
-  color: var(--text);
-  text-decoration: none;
-  padding: 0.45rem;
-}
-
 .attendance-elsewhere {
   color: var(--text-muted);
   font-size: 0.85rem;
 }
 
-.attendance-calendar .fc .fc-daygrid-day {
-  cursor: pointer;
-  transition: background-color 0.15s ease;
+.month-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
-.attendance-calendar .fc .fc-daygrid-day:hover {
-  background: color-mix(in srgb, var(--accent) 8%, transparent);
+.month-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
 
-.attendance-calendar .fc .fc-day-disabled,
-.attendance-calendar .fc .is-unavailable-day {
-  cursor: not-allowed;
-  background: var(--surface-muted);
+.month-picker-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-family: Georgia, 'Times New Roman', serif;
+  text-transform: capitalize;
 }
 
-.attendance-calendar .fc .fc-day-disabled .fc-daygrid-day-number,
-.attendance-calendar .fc .is-unavailable-day .fc-daygrid-day-number {
+.month-picker-nav {
+  width: 2.4rem;
+  min-width: 2.4rem;
+  padding: 0.35rem 0;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.month-picker-weekdays,
+.month-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.25rem;
+}
+
+.month-picker-weekdays span {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
   color: var(--text-muted);
-  opacity: 0.55;
-  pointer-events: none;
 }
 
-.attendance-calendar .fc .fc-daygrid-day.is-unavailable-day:hover,
-.attendance-calendar .fc .fc-day-disabled:hover {
-  background: var(--surface-muted);
+.month-picker-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.35rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
 }
 
-.attendance-calendar .fc .fc-daygrid-day-frame {
-  min-height: 3.4rem;
-  position: relative;
+.month-picker-cell:not(.is-empty):hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface-muted));
 }
 
-.attendance-calendar .fc .has-schedule-day .fc-day-schedule-dot {
-  position: absolute;
-  left: 50%;
-  bottom: 0.45rem;
-  width: 0.45rem;
-  height: 0.45rem;
-  border-radius: var(--radius-pill);
-  background: var(--accent);
-  transform: translateX(-50%);
-}
-
-.attendance-calendar .fc .is-selected-day {
-  background: color-mix(in srgb, var(--accent) 16%, transparent);
+.month-picker-cell.is-today {
   box-shadow: inset 0 0 0 2px var(--accent);
 }
 
-.attendance-calendar .fc .is-selected-day .fc-daygrid-day-number {
+.month-picker-cell.is-selected {
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
+  border-color: var(--accent);
   font-weight: 700;
   color: var(--accent);
 }
 
-@media (max-width: 60em) {
-  .attendance-layout {
-    grid-template-columns: 1fr;
+.month-picker-cell:disabled {
+  color: var(--text-muted);
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.month-picker-cell.is-empty {
+  pointer-events: none;
+}
+
+.month-picker-hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 45em) {
+  .week-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .week-calendar-btn {
+    width: 100%;
   }
 }

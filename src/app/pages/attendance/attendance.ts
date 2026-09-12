@@ -1,10 +1,5 @@
-import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation, computed, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { FullCalendarComponent, FullCalendarModule } from '@fullcalendar/angular';
-import { CalendarOptions, DayCellMountArg } from '@fullcalendar/core';
-import esLocale from '@fullcalendar/core/locales/es';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import interactionPlugin from '@fullcalendar/interaction';
 import { ApiService } from '../../core/api/api.service';
 import { ListQueryState } from '../../core/list-query';
 import { Attendance, Branch, ClassSchedule, PaginatedResponse, Student } from '../../core/models';
@@ -12,55 +7,59 @@ import { ConfirmService } from '../../shared/confirm/confirm.service';
 import { localDateIso } from '../../shared/date/local-iso-date';
 import { parseApiError } from '../../shared/forms/parse-api-error';
 import { ListPager } from '../../shared/list-pager/list-pager';
+import { Modal } from '../../shared/modal/modal';
+
+export type WeekChip = {
+  iso: string;
+  label: string;
+  dayNumber: number;
+  isToday: boolean;
+  isPast: boolean;
+  isFuture: boolean;
+  isSelected: boolean;
+  hasAttendance: boolean;
+};
+
+export type PickerCell = {
+  iso: string;
+  day: string;
+  empty: boolean;
+  isToday: boolean;
+  isSelected: boolean;
+  isFuture: boolean;
+};
+
+const WEEKDAY_LABELS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+const PICKER_WEEKDAYS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
 @Component({
   selector: 'app-attendance',
-  imports: [FormsModule, FullCalendarModule, ListPager],
+  imports: [FormsModule, ListPager, Modal],
   templateUrl: './attendance.html',
   styleUrl: './attendance.css',
-  encapsulation: ViewEncapsulation.None,
 })
 export class AttendancePage implements OnInit, OnDestroy {
-  @ViewChild('calendar') calendarComponent?: FullCalendarComponent;
-
   readonly branches = signal<Branch[]>([]);
   readonly students = signal<Student[]>([]);
   readonly branchSchedules = signal<ClassSchedule[]>([]);
   readonly schedules = signal<ClassSchedule[]>([]);
   readonly attendances = signal<Attendance[]>([]);
   readonly todayAttendances = signal<Attendance[]>([]);
+  readonly daysWithAttendance = signal<Set<string>>(new Set());
   readonly studentList = new ListQueryState();
+  readonly calendarOpen = signal(false);
   now: () => Date = () => new Date();
   date = this.todayIso();
   branchId: number | null = null;
   scheduleId: number | null = null;
+  pickerYear = this.now().getFullYear();
+  pickerMonth = this.now().getMonth();
 
   readonly presentIds = computed(() => new Set(this.attendances().map((a) => a.student_id)));
   readonly presentCount = computed(() => this.attendances().length);
   error = '';
 
   private scheduleTicker?: ReturnType<typeof setInterval>;
-
-  calendarOptions: CalendarOptions = {
-    plugins: [dayGridPlugin, interactionPlugin],
-    initialView: 'dayGridMonth',
-    initialDate: this.date,
-    locale: esLocale,
-    height: 'auto',
-    fixedWeekCount: false,
-    headerToolbar: {
-      left: '',
-      center: 'title',
-      right: '',
-    },
-    buttonText: {
-      today: 'Hoy',
-    },
-    selectable: false,
-    dateClick: (info) => this.selectDate(info.dateStr),
-    dayCellClassNames: (arg) => this.dayCellClasses(arg.date),
-    dayCellDidMount: (arg) => this.decorateDayCell(arg),
-  };
 
   constructor(
     private readonly api: ApiService,
@@ -80,7 +79,11 @@ export class AttendancePage implements OnInit, OnDestroy {
       error: (err) => this.setError(err, 'No se pudieron cargar las sucursales'),
     });
     this.reloadStudents();
-    this.scheduleTicker = setInterval(() => this.applyDaySchedules(), 30_000);
+    this.scheduleTicker = setInterval(() => {
+      if (this.date === this.todayIso()) {
+        this.applyDaySchedules();
+      }
+    }, 30_000);
   }
 
   ngOnDestroy() {
@@ -117,19 +120,94 @@ export class AttendancePage implements OnInit, OnDestroy {
     return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
   }
 
+  dateIso(date: Date): string {
+    return this.toIso(date.getFullYear(), date.getMonth() + 1, date.getDate());
+  }
+
   dayOfWeek(date: string): number {
     const [y, m, d] = date.split('-').map(Number);
     return new Date(y, m - 1, d).getDay();
   }
 
+  mondayOfCurrentWeek(): Date {
+    const today = this.now();
+    const mondayOffset = (today.getDay() + 6) % 7;
+    return new Date(today.getFullYear(), today.getMonth(), today.getDate() - mondayOffset);
+  }
+
+  weekRange(): { from: string; to: string } {
+    const monday = this.mondayOfCurrentWeek();
+    const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
+    return { from: this.dateIso(monday), to: this.dateIso(sunday) };
+  }
+
+  weekChips(): WeekChip[] {
+    const monday = this.mondayOfCurrentWeek();
+    const today = this.todayIso();
+    const marked = this.daysWithAttendance();
+    return WEEKDAY_LABELS.map((label, i) => {
+      const date = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
+      const iso = this.dateIso(date);
+      return {
+        iso,
+        label,
+        dayNumber: date.getDate(),
+        isToday: iso === today,
+        isPast: iso < today,
+        isFuture: iso > today,
+        isSelected: iso === this.date,
+        hasAttendance: marked.has(iso),
+      };
+    });
+  }
+
+  weekTitle(): string {
+    const { from, to } = this.weekRange();
+    const start = this.parseIso(from);
+    const end = this.parseIso(to);
+    const startDay = start.getDate();
+    const endLabel = end.toLocaleDateString('es-MX', { day: 'numeric', month: 'long' });
+    return `Semana del ${startDay} al ${endLabel}`;
+  }
+
   selectedDateLabel(): string {
-    const [y, m, d] = this.date.split('-').map(Number);
-    return new Date(y, m - 1, d).toLocaleDateString('es-MX', {
+    return this.parseIso(this.date).toLocaleDateString('es-MX', {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
       year: 'numeric',
     });
+  }
+
+  isViewingToday(): boolean {
+    return this.date === this.todayIso();
+  }
+
+  isViewingPast(): boolean {
+    return this.date < this.todayIso();
+  }
+
+  isViewingFuture(): boolean {
+    return this.date > this.todayIso();
+  }
+
+  canTakeAttendance(): boolean {
+    return this.date <= this.todayIso();
+  }
+
+  scheduleFieldLabel(): string {
+    if (this.isViewingToday()) return 'Horario en curso';
+    return 'Horario';
+  }
+
+  emptySchedulesMessage(): string {
+    if (this.isViewingToday()) {
+      return 'No hay un horario de clase en curso para esta sucursal.';
+    }
+    if (this.isViewingFuture()) {
+      return 'No hay horarios cargados para este día en esta sucursal.';
+    }
+    return 'No hay horarios para este día en esta sucursal.';
   }
 
   scheduleLabel(s: ClassSchedule): string {
@@ -175,45 +253,103 @@ export class AttendancePage implements OnInit, OnDestroy {
     });
   }
 
-  dayCellClasses(date: Date): string[] {
-    const classes: string[] = [];
-    const iso = this.toIso(date.getFullYear(), date.getMonth() + 1, date.getDate());
-    if (iso === this.date) {
-      classes.push('is-selected-day');
-    }
-    if (iso !== this.todayIso()) {
-      classes.push('is-unavailable-day');
-    }
-    if (this.branchSchedules().some((s) => s.day_of_week === date.getDay())) {
-      classes.push('has-schedule-day');
-    }
-    return classes;
-  }
-
-  decorateDayCell(arg: DayCellMountArg) {
-    const iso = this.toIso(arg.date.getFullYear(), arg.date.getMonth() + 1, arg.date.getDate());
-    arg.el.querySelector('.fc-day-schedule-dot')?.remove();
-    if (iso !== this.todayIso()) {
-      arg.el.setAttribute('aria-disabled', 'true');
-      return;
-    }
-    arg.el.removeAttribute('aria-disabled');
-    const count = this.branchSchedules().filter((s) => s.day_of_week === arg.date.getDay()).length;
-    if (!count) return;
-    const mark = document.createElement('span');
-    mark.className = 'fc-day-schedule-dot';
-    mark.title = count === 1 ? '1 horario' : `${count} horarios`;
-    mark.setAttribute('aria-hidden', 'true');
-    arg.el.querySelector('.fc-daygrid-day-frame')?.appendChild(mark);
+  selectChip(isoDate: string) {
+    this.selectDate(isoDate);
   }
 
   selectDate(isoDate: string) {
-    if (isoDate !== this.todayIso()) return;
     if (this.date === isoDate) return;
     this.clearError();
     this.date = isoDate;
-    this.refreshCalendarDayStyles();
     this.applyDaySchedules();
+  }
+
+  goToToday() {
+    this.selectDate(this.todayIso());
+  }
+
+  chipTitle(chip: WeekChip): string {
+    if (chip.isFuture) {
+      return 'Día futuro: se puede consultar el horario, pero no tomar asistencia';
+    }
+    if (chip.isPast) {
+      return 'Día anterior: puedes corregir o registrar asistencia';
+    }
+    return 'Día de hoy';
+  }
+
+  openCalendar() {
+    const [y, m] = this.date.split('-').map(Number);
+    this.pickerYear = y;
+    this.pickerMonth = m - 1;
+    this.calendarOpen.set(true);
+  }
+
+  closeCalendar() {
+    this.calendarOpen.set(false);
+  }
+
+  pickerMonthLabel(): string {
+    return new Date(this.pickerYear, this.pickerMonth, 1).toLocaleDateString('es-MX', {
+      month: 'long',
+      year: 'numeric',
+    });
+  }
+
+  pickerWeekdays(): string[] {
+    return PICKER_WEEKDAYS;
+  }
+
+  canAdvancePickerMonth(): boolean {
+    const now = this.now();
+    return this.pickerYear < now.getFullYear()
+      || (this.pickerYear === now.getFullYear() && this.pickerMonth < now.getMonth());
+  }
+
+  shiftPickerMonth(delta: number) {
+    const next = new Date(this.pickerYear, this.pickerMonth + delta, 1);
+    if (delta > 0 && !this.canAdvancePickerMonth()) return;
+    this.pickerYear = next.getFullYear();
+    this.pickerMonth = next.getMonth();
+  }
+
+  pickerCells(): PickerCell[] {
+    const first = new Date(this.pickerYear, this.pickerMonth, 1);
+    const startOffset = (first.getDay() + 6) % 7;
+    const daysInMonth = new Date(this.pickerYear, this.pickerMonth + 1, 0).getDate();
+    const today = this.todayIso();
+    const cells: PickerCell[] = [];
+
+    for (let i = 0; i < startOffset; i++) {
+      cells.push({
+        iso: `pad-${i}`,
+        day: '',
+        empty: true,
+        isToday: false,
+        isSelected: false,
+        isFuture: true,
+      });
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const iso = this.toIso(this.pickerYear, this.pickerMonth + 1, day);
+      cells.push({
+        iso,
+        day: String(day),
+        empty: false,
+        isToday: iso === today,
+        isSelected: iso === this.date,
+        isFuture: iso > today,
+      });
+    }
+
+    return cells;
+  }
+
+  selectCalendarDate(isoDate: string) {
+    if (isoDate > this.todayIso()) return;
+    this.selectDate(isoDate);
+    this.closeCalendar();
   }
 
   selectedBranch(): Branch | undefined {
@@ -238,7 +374,6 @@ export class AttendancePage implements OnInit, OnDestroy {
       .subscribe({
         next: (data) => {
           this.branchSchedules.set(data.filter((s) => s.is_active));
-          this.refreshCalendarDayStyles();
           this.applyDaySchedules();
         },
         error: (err) => this.setError(err, 'No se pudieron cargar los horarios'),
@@ -246,13 +381,20 @@ export class AttendancePage implements OnInit, OnDestroy {
   }
 
   applyDaySchedules() {
-    this.date = this.todayIso();
-    const active = this.branchSchedules().filter((s) => this.isScheduleCurrent(s));
+    const weekday = this.dayOfWeek(this.date);
+    let active = this.branchSchedules().filter((s) => s.day_of_week === weekday);
+    if (this.isViewingToday()) {
+      active = active.filter((s) => this.isScheduleCurrent(s));
+    }
+    active = [...active].sort(
+      (a, b) => this.timeToMinutes(a.start_time) - this.timeToMinutes(b.start_time),
+    );
     this.schedules.set(active);
     if (!active.length) {
       this.scheduleId = null;
       this.attendances.set([]);
       this.todayAttendances.set([]);
+      this.loadWeekAttendance();
       return;
     }
     const stillValid = active.some((s) => s.id === this.scheduleId);
@@ -260,11 +402,25 @@ export class AttendancePage implements OnInit, OnDestroy {
     this.reload();
   }
 
-  refreshCalendarDayStyles() {
-    const api = this.calendarComponent?.getApi();
-    if (!api) return;
-    api.gotoDate(this.date);
-    api.render();
+  loadWeekAttendance() {
+    if (!this.branchId) return;
+    const { from, to } = this.weekRange();
+    this.api
+      .get<Attendance[]>('/attendances', {
+        from,
+        to,
+        branch_id: this.branchId,
+      })
+      .subscribe({
+        next: (data) => {
+          this.daysWithAttendance.set(new Set(data.map((a) => this.attendanceDateIso(a))));
+        },
+        error: (err) => this.setError(err, 'No se pudieron cargar las asistencias de la semana'),
+      });
+  }
+
+  attendanceDateIso(attendance: Attendance): string {
+    return String(attendance.attendance_date).slice(0, 10);
   }
 
   reload() {
@@ -282,6 +438,7 @@ export class AttendancePage implements OnInit, OnDestroy {
         next: (data) => {
           this.todayAttendances.set(data);
           this.attendances.set(data.filter((a) => a.class_schedule_id === this.scheduleId));
+          this.loadWeekAttendance();
         },
         error: (err) => this.setError(err, 'No se pudieron cargar las asistencias'),
       });
@@ -304,7 +461,7 @@ export class AttendancePage implements OnInit, OnDestroy {
   }
 
   async toggle(student: Student) {
-    if (!this.branchId || !this.scheduleId) return;
+    if (!this.branchId || !this.scheduleId || !this.canTakeAttendance()) return;
     if (!this.isPresent(student.id) && this.elsewhereAttendance(student.id)) return;
 
     const existing = this.attendances().find((a) => a.student_id === student.id);
@@ -333,5 +490,10 @@ export class AttendancePage implements OnInit, OnDestroy {
         next: () => this.reload(),
         error: (err) => this.setError(err, 'No se pudo marcar la asistencia'),
       });
+  }
+
+  private parseIso(iso: string): Date {
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Date(y, m - 1, d);
   }
 }

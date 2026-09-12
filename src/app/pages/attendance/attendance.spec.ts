@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { ApiService } from '../../core/api/api.service';
 import { Attendance, Branch, ClassSchedule, Student } from '../../core/models';
@@ -23,6 +22,7 @@ describe('AttendancePage', () => {
   const thursdayMorning = () => new Date(2026, 6, 30, 10, 30, 0);
   const thursdayNoon = () => new Date(2026, 6, 30, 12, 0, 0);
   const thursdayEvening = () => new Date(2026, 6, 30, 18, 30, 0);
+  const wednesdayMorning = () => new Date(2026, 6, 29, 10, 30, 0);
   const textColor = hexToRgb('#1a2430');
 
   const branch: Branch = { id: 1, name: 'Centro', is_active: true, color: '#C45C26' };
@@ -103,21 +103,7 @@ describe('AttendancePage', () => {
         { provide: ApiService, useValue: api },
         { provide: ConfirmService, useValue: confirm },
       ],
-    })
-      .overrideComponent(AttendancePage, {
-        set: {
-          template: `
-            <span class="color-swatch" [style.background]="selectedBranchColor()"></span>
-            <aside class="attendance-calendar" [style.--branch-color]="selectedBranchColor()">
-              <div class="fc">
-                <h2 class="fc-toolbar-title">septiembre de 2026</h2>
-              </div>
-            </aside>
-          `,
-          imports: [FormsModule],
-        },
-      })
-      .compileComponents();
+    }).compileComponents();
 
     fixture = TestBed.createComponent(AttendancePage);
     component = fixture.componentInstance;
@@ -128,12 +114,12 @@ describe('AttendancePage', () => {
     component?.ngOnDestroy();
   });
 
-  function calendarTitle(): HTMLElement {
-    return fixture.nativeElement.querySelector('.fc-toolbar-title');
+  function weekTitle(): HTMLElement {
+    return fixture.nativeElement.querySelector('.week-title');
   }
 
-  function calendarPanel(): HTMLElement {
-    return fixture.nativeElement.querySelector('.attendance-calendar');
+  function weekPanel(): HTMLElement {
+    return fixture.nativeElement.querySelector('.attendance-week');
   }
 
   function render() {
@@ -172,35 +158,90 @@ describe('AttendancePage', () => {
     expect(api.get).toHaveBeenCalledWith('/attendances', {
       date: '2026-07-30',
     });
+    expect(api.get).toHaveBeenCalledWith('/attendances', {
+      from: '2026-07-27',
+      to: '2026-08-02',
+      branch_id: 1,
+    });
   });
 
-  it('no deja seleccionar un día distinto a hoy', () => {
+  it('preselecciona hoy en los chips de la semana', () => {
     component.ngOnInit();
-    component.error = 'Error previo';
+    const chips = component.weekChips();
 
-    component.selectDate('2026-07-31');
+    expect(chips.map((c) => c.label)).toEqual(['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']);
+    expect(chips.map((c) => c.iso)).toEqual([
+      '2026-07-27',
+      '2026-07-28',
+      '2026-07-29',
+      '2026-07-30',
+      '2026-07-31',
+      '2026-08-01',
+      '2026-08-02',
+    ]);
+    const today = chips.find((c) => c.isToday);
+    expect(today?.iso).toBe('2026-07-30');
+    expect(today?.isSelected).toBeTrue();
+    expect(chips.filter((c) => c.isFuture).map((c) => c.iso)).toEqual([
+      '2026-07-31',
+      '2026-08-01',
+      '2026-08-02',
+    ]);
+  });
+
+  it('marca con punto los días de la semana que ya tienen asistencia', () => {
+    component.daysWithAttendance.set(new Set(['2026-07-27', '2026-07-30']));
+    const chips = component.weekChips();
+
+    expect(chips.find((c) => c.iso === '2026-07-27')?.hasAttendance).toBeTrue();
+    expect(chips.find((c) => c.iso === '2026-07-30')?.hasAttendance).toBeTrue();
+    expect(chips.find((c) => c.iso === '2026-07-28')?.hasAttendance).toBeFalse();
+  });
+
+  it('desde un chip se puede ver un día futuro, pero no tomar asistencia', async () => {
+    component.now = wednesdayMorning;
+    component.ngOnInit();
+
+    component.selectChip('2026-07-30');
 
     expect(component.date).toBe('2026-07-30');
-    expect(component.schedules().map((s) => s.id)).toEqual([100]);
-    expect(component.error).toBe('Error previo');
+    expect(component.isViewingFuture()).toBeTrue();
+    expect(component.canTakeAttendance()).toBeFalse();
+    expect(component.schedules().map((s) => s.id)).toEqual([100, 101]);
+
+    api.post.and.returnValue(of({ id: 1 }));
+    await component.toggle(student);
+
+    expect(api.post).not.toHaveBeenCalled();
   });
 
-  it('dayCellClasses marca hoy y deja no disponible el resto', () => {
-    component.date = '2026-07-30';
-    component.branchSchedules.set([scheduleMorning]);
+  it('el calendario compacto permite corregir un día pasado', () => {
+    component.ngOnInit();
+    component.openCalendar();
 
-    expect(component.dayCellClasses(new Date(2026, 6, 30))).toContain('is-selected-day');
-    expect(component.dayCellClasses(new Date(2026, 6, 30))).toContain('has-schedule-day');
-    expect(component.dayCellClasses(new Date(2026, 6, 31))).toContain('is-unavailable-day');
-    expect(component.dayCellClasses(new Date(2026, 6, 31))).not.toContain('has-schedule-day');
+    component.selectCalendarDate('2026-07-23');
+
+    expect(component.date).toBe('2026-07-23');
+    expect(component.isViewingPast()).toBeTrue();
+    expect(component.canTakeAttendance()).toBeTrue();
+    expect(component.calendarOpen()).toBeFalse();
+    expect(component.schedules().map((s) => s.id)).toEqual([100, 101]);
+    expect(component.scheduleId).toBe(100);
   });
 
-  it('configura FullCalendar en español con el mes visible y días no actuales no seleccionables', () => {
-    expect(component.calendarOptions.initialView).toBe('dayGridMonth');
-    expect(component.calendarOptions.locale).toBeTruthy();
-    expect(component.calendarOptions.plugins?.length).toBeGreaterThan(0);
-    expect(component.calendarOptions.validRange).toBeUndefined();
-    expect(component.dayCellClasses(new Date(2026, 6, 31))).toContain('is-unavailable-day');
+  it('el calendario compacto no selecciona un día futuro', () => {
+    component.ngOnInit();
+    component.openCalendar();
+
+    component.selectCalendarDate('2026-07-31');
+
+    expect(component.date).toBe('2026-07-30');
+    expect(component.calendarOpen()).toBeTrue();
+  });
+
+  it('no muestra la grilla mensual como vista principal', () => {
+    expect((component as unknown as { calendarOptions?: unknown }).calendarOptions).toBeUndefined();
+    expect(component.weekChips().length).toBe(7);
   });
 
   it('limpia asistencias si no hay horario en curso', () => {
@@ -381,10 +422,10 @@ describe('AttendancePage', () => {
   it('pinta el swatch y el fondo del título con el color de sucursal, no el texto', () => {
     render();
 
-    const titleStyle = getComputedStyle(calendarTitle());
+    const titleStyle = getComputedStyle(weekTitle());
     const swatch = fixture.nativeElement.querySelector('.color-swatch') as HTMLElement;
 
-    expect(getComputedStyle(calendarPanel()).getPropertyValue('--branch-color').trim()).toBe('#C45C26');
+    expect(getComputedStyle(weekPanel()).getPropertyValue('--branch-color').trim()).toBe('#C45C26');
     expect(getComputedStyle(swatch).backgroundColor).toBe(hexToRgb('#C45C26'));
     expect(titleStyle.backgroundColor).toBe(hexToRgb('#C45C26'));
     expect(titleStyle.color).toBe(textColor);
@@ -397,10 +438,10 @@ describe('AttendancePage', () => {
     component.branchId = norte.id;
     render();
 
-    const titleStyle = getComputedStyle(calendarTitle());
+    const titleStyle = getComputedStyle(weekTitle());
 
     expect(component.selectedBranchColor()).toBe('#2563EB');
-    expect(getComputedStyle(calendarPanel()).getPropertyValue('--branch-color').trim()).toBe('#2563EB');
+    expect(getComputedStyle(weekPanel()).getPropertyValue('--branch-color').trim()).toBe('#2563EB');
     expect(titleStyle.backgroundColor).toBe(hexToRgb('#2563EB'));
     expect(titleStyle.color).toBe(textColor);
   });
