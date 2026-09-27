@@ -273,21 +273,90 @@ describe('AttendancePage', () => {
     expect(component.scheduleId).toBe(101);
   });
 
-  it('marca asistencia con class_schedule_id', async () => {
+  it('marcar presente no llama al API', () => {
     component.ngOnInit();
-    api.post.and.returnValue(of({ id: 1 }));
 
-    await component.toggle(student);
+    component.toggle(student);
 
-    expect(api.post).toHaveBeenCalledWith('/attendances', {
-      student_id: 10,
+    expect(api.post).not.toHaveBeenCalled();
+    expect(component.isPresent(10)).toBeTrue();
+    expect(component.hasUnsavedChanges()).toBeTrue();
+    expect(component.canSave()).toBeTrue();
+  });
+
+  it('registra todos los presentes en una sola petición', async () => {
+    const other: Student = {
+      id: 11,
+      first_name: 'Luis',
+      last_name: 'Gómez',
+      is_active: true,
+    };
+    component.ngOnInit();
+    component.students.set([student, other]);
+    api.post.and.returnValue(of([]));
+
+    component.toggle(student);
+    component.toggle(other);
+    await component.save();
+
+    expect(api.post).toHaveBeenCalledOnceWith('/attendances/sync', {
+      student_ids: [10, 11],
+      branch_id: 1,
+      class_schedule_id: 100,
+      attendance_date: '2026-07-30',
+    });
+    expect(api.delete).not.toHaveBeenCalled();
+  });
+
+  it('en un día pasado también registra en una sola petición', async () => {
+    component.ngOnInit();
+    component.selectCalendarDate('2026-07-23');
+    api.post.and.returnValue(of([]));
+
+    component.toggle(student);
+    await component.save();
+
+    expect(component.isViewingPast()).toBeTrue();
+    expect(api.post).toHaveBeenCalledWith('/attendances/sync', {
+      student_ids: [10],
+      branch_id: 1,
+      class_schedule_id: 100,
+      attendance_date: '2026-07-23',
+    });
+  });
+
+  it('quita un presente localmente y pide confirmación al guardar si ya estaba registrado', async () => {
+    component.ngOnInit();
+    component.attendances.set([
+      {
+        id: 55,
+        student_id: 10,
+        branch_id: 1,
+        class_schedule_id: 100,
+        attendance_date: '2026-07-30',
+        student,
+      },
+    ]);
+    component.selectedIds.set(new Set([10]));
+    confirm.ask.and.returnValue(Promise.resolve(true));
+    api.post.and.returnValue(of([]));
+
+    component.toggle(student);
+    expect(api.delete).not.toHaveBeenCalled();
+    expect(component.isPresent(10)).toBeFalse();
+
+    await component.save();
+
+    expect(confirm.ask).toHaveBeenCalled();
+    expect(api.post).toHaveBeenCalledWith('/attendances/sync', {
+      student_ids: [],
       branch_id: 1,
       class_schedule_id: 100,
       attendance_date: '2026-07-30',
     });
   });
 
-  it('quita asistencia tras confirmación', async () => {
+  it('no guarda si se cancela la confirmación al quitar registrados', async () => {
     component.ngOnInit();
     component.attendances.set([
       {
@@ -296,36 +365,19 @@ describe('AttendancePage', () => {
         branch_id: 1,
         class_schedule_id: 100,
         attendance_date: '2026-07-30',
+        student,
       },
     ]);
-    confirm.ask.and.returnValue(Promise.resolve(true));
-    api.delete.and.returnValue(of(null));
-
-    await component.toggle(student);
-
-    expect(confirm.ask).toHaveBeenCalled();
-    expect(api.delete).toHaveBeenCalledWith('/attendances/55');
-  });
-
-  it('no quita asistencia si se cancela la confirmación', async () => {
-    component.ngOnInit();
-    component.attendances.set([
-      {
-        id: 55,
-        student_id: 10,
-        branch_id: 1,
-        class_schedule_id: 100,
-        attendance_date: '2026-07-30',
-      },
-    ]);
+    component.selectedIds.set(new Set([10]));
     confirm.ask.and.returnValue(Promise.resolve(false));
 
-    await component.toggle(student);
+    component.toggle(student);
+    await component.save();
 
-    expect(api.delete).not.toHaveBeenCalled();
+    expect(api.post).not.toHaveBeenCalled();
   });
 
-  it('no marca si el alumno ya está presente en otra sucursal', async () => {
+  it('no marca si el alumno ya está presente en otra sucursal', () => {
     component.ngOnInit();
     component.todayAttendances.set([
       {
@@ -338,30 +390,23 @@ describe('AttendancePage', () => {
         class_schedule: norteMorning,
       },
     ]);
-    api.post.and.returnValue(of({ id: 1 }));
 
-    await component.toggle(student);
+    component.toggle(student);
 
-    expect(api.post).not.toHaveBeenCalled();
+    expect(component.isPresent(10)).toBeFalse();
+    expect(component.hasUnsavedChanges()).toBeFalse();
     expect(component.elsewhereAttendance(10)?.branch?.name).toBe('Norte');
   });
 
-  it('isPresent refleja las asistencias cargadas', () => {
-    component.attendances.set([
-      {
-        id: 1,
-        student_id: 10,
-        branch_id: 1,
-        class_schedule_id: 100,
-        attendance_date: '2026-07-30',
-      },
-    ]);
+  it('isPresent refleja la selección local', () => {
+    component.selectedIds.set(new Set([10]));
     expect(component.isPresent(10)).toBeTrue();
     expect(component.isPresent(99)).toBeFalse();
   });
 
-  it('muestra el mensaje de error al fallar el POST de asistencia', async () => {
+  it('muestra el mensaje de error al fallar el registro de asistencia', async () => {
     component.ngOnInit();
+    component.toggle(student);
     api.post.and.returnValue(
       throwError(() => ({
         error: {
@@ -373,13 +418,14 @@ describe('AttendancePage', () => {
       })),
     );
 
-    await component.toggle(student);
+    await component.save();
 
     expect(component.error).toBe('El horario no corresponde a la clase en curso.');
   });
 
   it('muestra el primer error de campo si no hay message', async () => {
     component.ngOnInit();
+    component.toggle(student);
     api.post.and.returnValue(
       throwError(() => ({
         error: {
@@ -390,7 +436,7 @@ describe('AttendancePage', () => {
       })),
     );
 
-    await component.toggle(student);
+    await component.save();
 
     expect(component.error).toBe('La sucursal no coincide con la del horario seleccionado.');
   });

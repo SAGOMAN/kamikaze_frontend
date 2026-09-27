@@ -2,7 +2,7 @@
   <header class="page-header">
     <div>
       <h1>Asistencia</h1>
-      <p>Pasa lista del día de hoy. Usa el calendario para corregir un día anterior.</p>
+      <p>Marca a los presentes y registra la lista de una vez. Usa el calendario para corregir un día anterior.</p>
     </div>
     <div class="filters">
       <label class="branch-field">
@@ -103,7 +103,20 @@
         @if (canTakeAttendance() && schedules().length) {
           <div class="attendance-cta">
             <span class="attendance-cta-label">Tomar asistencia</span>
-            <span class="attendance-cta-hint">Marca a los alumnos del horario seleccionado.</span>
+            <span class="attendance-cta-hint">Marca a los presentes. Los cambios se registran al guardar.</span>
+            <div class="attendance-cta-actions">
+              <button
+                type="button"
+                class="btn"
+                [disabled]="!canSave()"
+                (click)="save()"
+              >
+                {{ saving() ? 'Registrando…' : 'Registrar asistencia' }}
+              </button>
+              @if (hasUnsavedChanges()) {
+                <span class="attendance-unsaved">Hay cambios sin registrar</span>
+              }
+            </div>
           </div>
         }
       </div>
@@ -148,6 +161,7 @@
                       <button
                         type="button"
                         class="btn"
+                        [disabled]="saving()"
                         (click)="toggle(s)"
                       >
                         Presente
@@ -160,6 +174,7 @@
                       <button
                         type="button"
                         class="btn ghost"
+                        [disabled]="saving()"
                         (click)="toggle(s)"
                       >
                         Marcar
@@ -172,6 +187,19 @@
           </table>
         </div>
         <app-list-pager [meta]="studentList.meta()" (pageChange)="goToStudentPage($event)" />
+        <div class="attendance-save-bar panel">
+          <p>
+            {{ presentCount() }} presente{{ presentCount() === 1 ? '' : 's' }} seleccionado{{ presentCount() === 1 ? '' : 's' }}
+          </p>
+          <button
+            type="button"
+            class="btn"
+            [disabled]="!canSave()"
+            (click)="save()"
+          >
+            {{ saving() ? 'Registrando…' : 'Registrar asistencia' }}
+          </button>
+        </div>
       }
     </div>
   </div>

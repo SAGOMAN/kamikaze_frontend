@@ -44,10 +44,12 @@ export class AttendancePage implements OnInit, OnDestroy {
   readonly branchSchedules = signal<ClassSchedule[]>([]);
   readonly schedules = signal<ClassSchedule[]>([]);
   readonly attendances = signal<Attendance[]>([]);
+  readonly selectedIds = signal<Set<number>>(new Set());
   readonly todayAttendances = signal<Attendance[]>([]);
   readonly daysWithAttendance = signal<Set<string>>(new Set());
   readonly studentList = new ListQueryState();
   readonly calendarOpen = signal(false);
+  readonly saving = signal(false);
   now: () => Date = () => new Date();
   date = this.todayIso();
   branchId: number | null = null;
@@ -55,8 +57,17 @@ export class AttendancePage implements OnInit, OnDestroy {
   pickerYear = this.now().getFullYear();
   pickerMonth = this.now().getMonth();
 
-  readonly presentIds = computed(() => new Set(this.attendances().map((a) => a.student_id)));
-  readonly presentCount = computed(() => this.attendances().length);
+  readonly presentIds = computed(() => this.selectedIds());
+  readonly presentCount = computed(() => this.selectedIds().size);
+  readonly hasUnsavedChanges = computed(() => {
+    const selected = this.selectedIds();
+    const saved = new Set(this.attendances().map((a) => a.student_id));
+    if (selected.size !== saved.size) return true;
+    for (const id of selected) {
+      if (!saved.has(id)) return true;
+    }
+    return false;
+  });
   error = '';
 
   private scheduleTicker?: ReturnType<typeof setInterval>;
@@ -393,6 +404,7 @@ export class AttendancePage implements OnInit, OnDestroy {
     if (!active.length) {
       this.scheduleId = null;
       this.attendances.set([]);
+      this.selectedIds.set(new Set());
       this.todayAttendances.set([]);
       this.loadWeekAttendance();
       return;
@@ -427,6 +439,7 @@ export class AttendancePage implements OnInit, OnDestroy {
     this.clearError();
     if (!this.branchId || !this.scheduleId) {
       this.attendances.set([]);
+      this.selectedIds.set(new Set());
       this.todayAttendances.set([]);
       return;
     }
@@ -437,7 +450,9 @@ export class AttendancePage implements OnInit, OnDestroy {
       .subscribe({
         next: (data) => {
           this.todayAttendances.set(data);
-          this.attendances.set(data.filter((a) => a.class_schedule_id === this.scheduleId));
+          const roster = data.filter((a) => a.class_schedule_id === this.scheduleId);
+          this.attendances.set(roster);
+          this.selectedIds.set(new Set(roster.map((a) => a.student_id)));
           this.loadWeekAttendance();
         },
         error: (err) => this.setError(err, 'No se pudieron cargar las asistencias'),
@@ -460,36 +475,66 @@ export class AttendancePage implements OnInit, OnDestroy {
     this.error = parseApiError(err, fallback).message;
   }
 
-  async toggle(student: Student) {
-    if (!this.branchId || !this.scheduleId || !this.canTakeAttendance()) return;
+  canSave(): boolean {
+    return !!this.branchId
+      && !!this.scheduleId
+      && this.canTakeAttendance()
+      && this.hasUnsavedChanges()
+      && !this.saving();
+  }
+
+  toggle(student: Student) {
+    if (!this.branchId || !this.scheduleId || !this.canTakeAttendance() || this.saving()) return;
     if (!this.isPresent(student.id) && this.elsewhereAttendance(student.id)) return;
 
-    const existing = this.attendances().find((a) => a.student_id === student.id);
-    if (existing) {
+    const next = new Set(this.selectedIds());
+    if (next.has(student.id)) {
+      next.delete(student.id);
+    } else {
+      next.add(student.id);
+    }
+    this.selectedIds.set(next);
+    this.clearError();
+  }
+
+  async save() {
+    if (!this.canSave()) return;
+
+    const removed = this.attendances().filter((a) => !this.selectedIds().has(a.student_id));
+    if (removed.length) {
       const ok = await this.confirm.ask(
-        `¿Está seguro de que desea quitar la asistencia de ${this.label(student)}?`,
+        removed.length === 1
+          ? `¿Está seguro de que desea quitar la asistencia de ${this.attendanceLabel(removed[0])}?`
+          : `¿Está seguro de que desea quitar la asistencia de ${removed.length} alumnos?`,
       );
       if (!ok) return;
-      this.clearError();
-      this.api.delete(`/attendances/${existing.id}`).subscribe({
-        next: () => this.reload(),
-        error: (err) => this.setError(err, 'No se pudo quitar la asistencia'),
-      });
-      return;
     }
 
     this.clearError();
+    this.saving.set(true);
     this.api
-      .post('/attendances', {
-        student_id: student.id,
+      .post<Attendance[]>('/attendances/sync', {
+        student_ids: [...this.selectedIds()].sort((a, b) => a - b),
         branch_id: this.branchId,
         class_schedule_id: this.scheduleId,
         attendance_date: this.date,
       })
       .subscribe({
-        next: () => this.reload(),
-        error: (err) => this.setError(err, 'No se pudo marcar la asistencia'),
+        next: () => {
+          this.saving.set(false);
+          this.reload();
+        },
+        error: (err) => {
+          this.saving.set(false);
+          this.setError(err, 'No se pudo registrar la asistencia');
+        },
       });
+  }
+
+  private attendanceLabel(attendance: Attendance): string {
+    if (attendance.student) return this.label(attendance.student);
+    const student = this.students().find((s) => s.id === attendance.student_id);
+    return student ? this.label(student) : 'este alumno';
   }
 
   private parseIso(iso: string): Date {
