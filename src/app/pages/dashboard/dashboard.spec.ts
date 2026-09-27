@@ -36,6 +36,7 @@ describe('DashboardPage', () => {
       { id: 2, name: 'Norte', income: { membership_payments: 0, sales: 80, total: 80 }, expenses: { total: 30, merchandise: 0, operational: 30 }, balance: 50 },
       { id: null, name: 'Sin sucursal', income: { membership_payments: 400, sales: 0, total: 400 }, expenses: { total: 0, merchandise: 0, operational: 0 }, balance: 400 },
     ],
+    unassigned: { income: { membership_payments: 400, sales: 0, total: 400 }, expenses: { total: 0, merchandise: 0, operational: 0 }, balance: 400 },
     tops: {
       sales: [],
       expenses: [],
@@ -118,6 +119,37 @@ describe('DashboardPage', () => {
 
     expect(component.allBranchesSelected()).toBeTrue();
     expect(component.queryParams()['branch_ids']).toBeUndefined();
+  });
+
+  it('oculta el desglose por mes cuando el período es Mes', () => {
+    expect(fixture.nativeElement.querySelector('[aria-label="Desglose por mes"]')).toBeNull();
+
+    component.report.update((current) => (current ? { ...current, period: 'year' } : current));
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[aria-label="Desglose por mes"]')).not.toBeNull();
+  });
+
+  it('muestra Sin sucursal antes de los indicadores del filtro', () => {
+    const root = fixture.nativeElement as HTMLElement;
+    const unassigned = root.querySelector('[aria-label="Indicadores sin sucursal"]');
+    const filtered = root.querySelector('[aria-label="Indicadores por sucursal"]');
+    expect(unassigned).not.toBeNull();
+    expect(filtered).not.toBeNull();
+    expect(unassigned!.compareDocumentPosition(filtered!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(component.branchRows()[0].name).toBe('Sin sucursal');
+  });
+
+  it('muestra los indicadores de Sin sucursal aunque el comparativo esté oculto', () => {
+    component.toggleBranch(2, { target: { checked: false } } as unknown as Event);
+    fixture.detectChanges();
+
+    expect(component.showBranchBreakdown()).toBeFalse();
+    expect(component.sinSucursal().income.membership_payments).toBe(400);
+    const section = fixture.nativeElement.querySelector('[aria-label="Indicadores sin sucursal"]') as HTMLElement;
+    expect(section).not.toBeNull();
+    expect(section.textContent).toContain('Sin sucursal');
+    expect(section.textContent).toContain(component.money(400));
   });
 
   it('resume los productos vendidos en el top de ventas', () => {

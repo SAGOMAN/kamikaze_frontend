@@ -218,6 +218,15 @@ export interface PeriodReport {
   balance: number;
   months: PeriodReportMonth[];
   by_branch: PeriodReportBranch[];
+  unassigned?: {
+    income: {
+      membership_payments: number;
+      sales: number;
+      total: number;
+    };
+    expenses: { total: number; merchandise: number; operational: number };
+    balance: number;
+  };
   tops: MonthlyReportTops | null;
 }
 

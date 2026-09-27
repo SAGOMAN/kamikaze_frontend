@@ -106,38 +106,81 @@
       }
     </p>
 
-    <div class="stats">
-      <article class="stat-income">
-        <h2>Mensualidades</h2>
-        <p>{{ money(r.income.membership_payments) }}</p>
-      </article>
-      <article class="stat-income">
-        <h2>Ventas</h2>
-        <p>{{ money(r.income.sales) }}</p>
-      </article>
-      <article class="stat-income-total">
-        <h2>Ingresos totales</h2>
-        <p>{{ money(r.income.total) }}</p>
-      </article>
-      <article class="stat-expense">
-        <h2>Mercancía</h2>
-        <p>{{ money(r.expenses.merchandise) }}</p>
-      </article>
-      <article class="stat-expense">
-        <h2>Operativos</h2>
-        <p>{{ money(r.expenses.operational) }}</p>
-      </article>
-      <article class="stat-expense-total">
-        <h2>Gastos</h2>
-        <p>{{ money(r.expenses.total) }}</p>
-      </article>
-      <article class="accent">
-        <h2>Balance</h2>
-        <p>{{ money(r.balance) }}</p>
-      </article>
-    </div>
+    <section class="breakdown" aria-label="Indicadores sin sucursal">
+      <header class="breakdown-header">
+        <h2 class="section-title">Sin sucursal</h2>
+        <p class="muted">Mensualidades y gastos sin sucursal de este período.</p>
+      </header>
+      <div class="stats">
+        <article class="stat-income">
+          <h2>Mensualidades</h2>
+          <p>{{ money(sinSucursal().income.membership_payments) }}</p>
+        </article>
+        <article class="stat-income">
+          <h2>Ventas</h2>
+          <p>{{ money(sinSucursal().income.sales) }}</p>
+        </article>
+        <article class="stat-income-total">
+          <h2>Ingresos totales</h2>
+          <p>{{ money(sinSucursal().income.total) }}</p>
+        </article>
+        <article class="stat-expense">
+          <h2>Mercancía</h2>
+          <p>{{ money(sinSucursal().expenses.merchandise) }}</p>
+        </article>
+        <article class="stat-expense">
+          <h2>Operativos</h2>
+          <p>{{ money(sinSucursal().expenses.operational) }}</p>
+        </article>
+        <article class="stat-expense-total">
+          <h2>Gastos</h2>
+          <p>{{ money(sinSucursal().expenses.total) }}</p>
+        </article>
+        <article class="accent">
+          <h2>Balance</h2>
+          <p>{{ money(sinSucursal().balance) }}</p>
+        </article>
+      </div>
+    </section>
 
-    @if (showBranchBreakdown() && r.by_branch?.length) {
+    <section class="breakdown" aria-label="Indicadores por sucursal">
+      <header class="breakdown-header">
+        <h2 class="section-title">{{ r.sucursales_label || 'Todas' }}</h2>
+        <p class="muted">Suma de las sucursales del filtro.</p>
+      </header>
+      <div class="stats">
+        <article class="stat-income">
+          <h2>Mensualidades</h2>
+          <p>{{ money(r.income.membership_payments) }}</p>
+        </article>
+        <article class="stat-income">
+          <h2>Ventas</h2>
+          <p>{{ money(r.income.sales) }}</p>
+        </article>
+        <article class="stat-income-total">
+          <h2>Ingresos totales</h2>
+          <p>{{ money(r.income.total) }}</p>
+        </article>
+        <article class="stat-expense">
+          <h2>Mercancía</h2>
+          <p>{{ money(r.expenses.merchandise) }}</p>
+        </article>
+        <article class="stat-expense">
+          <h2>Operativos</h2>
+          <p>{{ money(r.expenses.operational) }}</p>
+        </article>
+        <article class="stat-expense-total">
+          <h2>Gastos</h2>
+          <p>{{ money(r.expenses.total) }}</p>
+        </article>
+        <article class="accent">
+          <h2>Balance</h2>
+          <p>{{ money(r.balance) }}</p>
+        </article>
+      </div>
+    </section>
+
+    @if (showBranchBreakdown() && branchRows().length) {
       <section class="breakdown" aria-label="Comparativo por sucursal">
         <header class="breakdown-header">
           <h2 class="section-title">Comparativo por sucursal</h2>
@@ -145,7 +188,7 @@
         </header>
 
         <div class="branch-bars" aria-hidden="true">
-          @for (row of r.by_branch; track row.id ?? row.name) {
+          @for (row of branchRows(); track row.id ?? row.name) {
             <div class="branch-bar-block">
               <p class="branch-bar-name">{{ row.name }}</p>
               <div class="branch-bar-line">
@@ -181,7 +224,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (row of r.by_branch; track row.id ?? row.name) {
+              @for (row of branchRows(); track row.id ?? row.name) {
                 <tr>
                   <td>{{ row.name }}</td>
                   <td>{{ money(row.income.membership_payments) }}</td>
@@ -199,6 +242,7 @@
       </section>
     }
 
+    @if (r.period !== 'month') {
     <section class="breakdown" aria-label="Desglose por mes">
       <header class="breakdown-header">
         <h2 class="section-title">Desglose por mes</h2>
@@ -235,6 +279,7 @@
         </table>
       </div>
     </section>
+    }
 
     @if (r.tops; as tops) {
       <section class="tops" aria-label="Tops del mes">

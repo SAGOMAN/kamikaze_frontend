@@ -120,6 +120,27 @@ export class DashboardPage implements OnInit {
     return this.selectedBranchIds().length > 1;
   }
 
+  branchRows() {
+    const rows = this.report()?.by_branch ?? [];
+    return [...rows.filter((row) => row.id == null), ...rows.filter((row) => row.id != null)];
+  }
+
+  sinSucursal() {
+    const report = this.report();
+    if (report?.unassigned) {
+      return report.unassigned;
+    }
+    const row = report?.by_branch?.find((item) => item.id == null);
+    if (row) {
+      return row;
+    }
+    return {
+      income: { membership_payments: 0, sales: 0, total: 0 },
+      expenses: { total: 0, merchandise: 0, operational: 0 },
+      balance: 0,
+    };
+  }
+
   incomeBarPct(row: PeriodReportBranch): number {
     const max = Math.max(0, ...(this.report()?.by_branch ?? []).map((item) => item.income.total));
     if (max <= 0) {
