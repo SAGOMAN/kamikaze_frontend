@@ -5,8 +5,8 @@ import { ListQueryState } from '../../core/list-query';
 import { Branch, PaginatedResponse, Product, Sale } from '../../core/models';
 import { ActionBtn } from '../../shared/action-btn/action-btn';
 import { ConfirmService } from '../../shared/confirm/confirm.service';
+import { CivilDatePipe } from '../../shared/date/civil-date.pipe';
 import { localDateIso } from '../../shared/date/local-iso-date';
-import { TimestampPipe } from '../../shared/date/timestamp.pipe';
 import { FieldError } from '../../shared/forms/field-error';
 import { parseApiError } from '../../shared/forms/parse-api-error';
 import { showInvalid } from '../../shared/forms/show-invalid';
@@ -20,7 +20,7 @@ interface DraftItem {
 
 @Component({
   selector: 'app-sales',
-  imports: [FormsModule, Modal, TimestampPipe, ListPager, FieldError, ActionBtn],
+  imports: [FormsModule, Modal, CivilDatePipe, ListPager, FieldError, ActionBtn],
   templateUrl: './sales.html',
   styleUrl: './sales.css',
 })

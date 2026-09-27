@@ -124,6 +124,7 @@ export interface MonthlyReportTopSale {
   total: number;
   notes?: string | null;
   branch?: { id: number; name: string } | null;
+  items?: SaleItem[];
 }
 
 export interface MonthlyReportTopExpense {

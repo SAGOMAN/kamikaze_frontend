@@ -119,4 +119,18 @@ describe('DashboardPage', () => {
     expect(component.allBranchesSelected()).toBeTrue();
     expect(component.queryParams()['branch_ids']).toBeUndefined();
   });
+
+  it('resume los productos vendidos en el top de ventas', () => {
+    expect(
+      component.saleItemsLabel({
+        id: 1,
+        sale_date: '2026-08-05',
+        total: 300,
+        items: [
+          { product_id: 10, quantity: 2, unit_price: 150, subtotal: 300, product: { id: 10, name: 'Guantes', unit_price: 150, is_active: true } },
+          { product_id: 11, quantity: 1, unit_price: 80, subtotal: 80 },
+        ],
+      }),
+    ).toBe('Guantes × 2, Producto 11 × 1');
+  });
 });

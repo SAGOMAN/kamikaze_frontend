@@ -46,7 +46,7 @@
         <tbody>
           @for (sale of sales(); track sale.id) {
             <tr>
-              <td>{{ sale.sale_date | timestamp }}</td>
+              <td>{{ sale.sale_date | civilDate }}</td>
               <td>
                 <span class="sale-branch">
                   <span
@@ -73,7 +73,7 @@
           <div class="sale-card-top">
             <div>
               <strong>{{ formatMoney(sale.total) }}</strong>
-              <p>{{ sale.sale_date | timestamp }}</p>
+              <p>{{ sale.sale_date | civilDate }}</p>
             </div>
             <span class="sale-branch">
               <span

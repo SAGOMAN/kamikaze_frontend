@@ -253,7 +253,10 @@
                     <span class="top-rank">{{ i + 1 }}</span>
                     <div class="top-body">
                       <strong>{{ item.branch?.name || 'Sin sucursal' }}</strong>
-                      <span class="muted">{{ item.sale_date | timestamp }}</span>
+                      @if (saleItemsLabel(item); as products) {
+                        <span class="top-products">{{ products }}</span>
+                      }
+                      <span class="muted">{{ item.sale_date | civilDate }}</span>
                     </div>
                     <span class="top-value">{{ money(item.total) }}</span>
                   </li>

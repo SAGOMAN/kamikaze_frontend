@@ -1,12 +1,13 @@
 import { Component, ElementRef, HostListener, OnInit, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
-import { Branch, PeriodReport, PeriodReportBranch, ReportPeriodType } from '../../core/models';
+import { Branch, MonthlyReportTopSale, PeriodReport, PeriodReportBranch, ReportPeriodType } from '../../core/models';
+import { CivilDatePipe } from '../../shared/date/civil-date.pipe';
 import { TimestampPipe } from '../../shared/date/timestamp.pipe';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [FormsModule, TimestampPipe],
+  imports: [FormsModule, TimestampPipe, CivilDatePipe],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
@@ -177,6 +178,19 @@ export class DashboardPage implements OnInit {
 
   money(value: number | undefined) {
     return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(value ?? 0);
+  }
+
+  saleItemsLabel(sale: MonthlyReportTopSale): string {
+    const items = sale.items ?? [];
+    if (!items.length) {
+      return '';
+    }
+    return items
+      .map((item) => {
+        const name = item.product?.name || `Producto ${item.product_id}`;
+        return `${name} × ${item.quantity}`;
+      })
+      .join(', ');
   }
 
   monthLabel(year: number, month: number) {
